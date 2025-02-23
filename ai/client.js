@@ -283,7 +283,7 @@ const client_prototype = {
 
 		if (this.config.system_prompt.includes("{{") &&
 			this.config.system_prompt.includes("}}")) {
-			console.error("[Warning: probable {{placeholder}} text in system prompt]");
+			console.warn("[Warning: probable {{placeholder}} text in system prompt]");
 		}
 
 		let delay_promise;
