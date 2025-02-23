@@ -126,25 +126,6 @@ const bot_prototype = {
 				resolve(this);						// The promise returned by init() is resolved when the Discord connection is "ready"
 			});
 
-			let help = (msg) => {
-				let st = ["```\nNormal commands - ping the LLM:\n"];
-				for (let [key, value] of Object.entries(commands)) {
-					if (!commands_that_can_be_sent_untargeted.includes(key)) {
-						st.push(`  ${key.padEnd(12)} ${value[1].toString()}`);
-					}
-				}
-				st.push("\nChannel commands - can optionally send without ping, to affect every LLM:\n");
-				for (let [key, value] of Object.entries(commands)) {
-					if (commands_that_can_be_sent_untargeted.includes(key)) {
-						st.push(`  ${key.padEnd(12)} ${value[1].toString()}`);
-					}
-				}
-				st.push("```");
-				msg.channel.send(st.join("\n")).catch(error => {
-					console.log(error);
-				});
-			};
-
 			let commands = {	// Note that the first arg received by all of these will be msg. Then any other args (which most don't use).
 			"!abort":     [(msg, ...args) =>                 this.abort(msg, ...args), "Abort current operation. Bump last_handled marker."                ],
 			"!break":     [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !abort."                                                 ],
@@ -165,6 +146,25 @@ const bot_prototype = {
 			};
 
 			let commands_that_can_be_sent_untargeted = ["!abort", "!break", "!reset"];		// Note that these aren't allowed to have arguments.
+
+			let help = (msg) => {
+				let st = ["```\nNormal commands - ping the LLM:\n"];
+				for (let [key, value] of Object.entries(commands)) {
+					if (!commands_that_can_be_sent_untargeted.includes(key)) {
+						st.push(`  ${key.padEnd(12)} ${value[1].toString()}`);
+					}
+				}
+				st.push("\nChannel commands - can optionally send without ping, to affect every LLM:\n");
+				for (let [key, value] of Object.entries(commands)) {
+					if (commands_that_can_be_sent_untargeted.includes(key)) {
+						st.push(`  ${key.padEnd(12)} ${value[1].toString()}`);
+					}
+				}
+				st.push("```");
+				msg.channel.send(st.join("\n")).catch(error => {
+					console.log(error);
+				});
+			};
 
 			this.conn.on("messageCreate", (msg) => {
 				if (this.msg_is_mine(msg)) {
