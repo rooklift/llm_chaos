@@ -266,7 +266,7 @@ const client_prototype = {
 	parse_200_response: function(data) {
 		let { parser } = this.get_handlers();
 		return parser(data);
-	}
+	},
 
 	send_conversation: function(conversation, raw = false, abortcontroller = null) {
 		if (this.errors > this.config.max_errors) {
