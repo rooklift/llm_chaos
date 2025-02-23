@@ -127,9 +127,17 @@ const bot_prototype = {
 			});
 
 			let help = (msg) => {
-				let st = ["```"];
+				let st = ["```\nNormal commands - ping the LLM:\n"];
 				for (let [key, value] of Object.entries(commands)) {
-					st.push(`${key.padEnd(12)} ${value[1].toString()}`);
+					if (!commands_that_can_be_sent_untargeted.includes(key)) {
+						st.push(`  ${key.padEnd(12)} ${value[1].toString()}`);
+					}
+				}
+				st.push("\nChannel commands - can optionally send without ping, to affect every LLM:\n")
+				for (let [key, value] of Object.entries(commands)) {
+					if (commands_that_can_be_sent_untargeted.includes(key)) {
+						st.push(`  ${key.padEnd(12)} ${value[1].toString()}`);
+					}
 				}
 				st.push("```");
 				msg.channel.send(st.join("\n")).catch(error => {
@@ -149,7 +157,7 @@ const bot_prototype = {
 			"!output":    [(msg, ...args) =>       this.log_last_output(msg, ...args), "Dump the last body received from the LLM's API to the console."    ],
 			"!poll":      [(msg, ...args) =>         this.set_poll_wait(msg, ...args), "Set the polling delay in milliseconds."                            ],
 			"!reasoning": [(msg, ...args) =>  this.set_reasoning_effort(msg, ...args), "Alias for !effort."                                                ],
-			"!reset":     [(msg, ...args) =>                 this.reset(msg, ...args), "Reset the bot's history and make it use this channel."             ],
+			"!reset":     [(msg, ...args) =>                 this.reset(msg, ...args), "Clear the history. Make the LLM use this channel."                 ],
 			"!show":      [(msg, ...args) =>    this.set_show_reasoning(msg, ...args), "Set / toggle showing reasoning (if available) inline in the text." ],
 			"!status":    [(msg, ...args) =>           this.send_status(msg, ...args), "Display essential bot status info in this channel."                ],
 			"!system":    [(msg, ...args) =>    this.dump_system_prompt(msg, ...args), "Dump the system prompt to the console."                            ],
