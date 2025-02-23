@@ -178,3 +178,13 @@ exports.centre_string = function(s, width) {
 	let left_padding = Math.floor(total_padding / 2);
 	return " ".repeat(left_padding) + s;
 };
+
+exports.format_timestamp = function(date) {
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    const month = date.toLocaleString("en-GB", { month: "short" });
+    const day = String(date.getDate()).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${hours}:${minutes}:${seconds} on ${month} ${day}, ${year}`;
+};

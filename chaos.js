@@ -748,6 +748,6 @@ Promise.all(bot_promises).then(arr => {
 		bot.ai_client.replace_in_system_prompt("{{serverOwner}}", common.owner);
 		bot.start();
 	}
-	const time_str = (new Date()).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-	console.log(`LLM chaos started at: ${time_str}`);
+	console.log(`Script last modified: ${helpers.format_timestamp(fs.statSync(__filename).mtime)}`);
+	console.log(`LLM chaos started at: ${helpers.format_timestamp(new Date())}`);
 });
