@@ -198,6 +198,12 @@ const client_prototype = {
 		return [headers, data];
 	},
 
+	openrouter_request: function(formatted_conversation) {
+		let [headers, data] = this.openai_request(formatted_conversation);
+		data["include_reasoning"] = true;
+		return [headers, data];
+	},
+
 	google_request: function(formatted_conversation) {
 		let headers = {
 			"x-goog-api-key": this.get_api_key(),
@@ -224,19 +230,30 @@ const client_prototype = {
 		return [headers, data];
 	},
 
-	prepare_request: function(conversation, raw) {  	// raw flag means conversation is preformatted.
-		let headers, data;
+	prepare_request: function(conversation, raw) {  			// raw flag means conversation is preformatted.
+
+		let formatter = utils.format_message_array_openai;		// Correct for most things (except Google at time of writing).
+		let requester;
+
 		if (this.is_anthropic()) {
-			[headers, data] = this.anthropic_request(raw ? conversation : utils.format_message_array_openai(conversation));
+			requester = this.anthropic_request.bind(this);
 		} else if (this.is_google()) {
-			[headers, data] = this.google_request(raw ? conversation : utils.format_message_array_google(conversation));
+			formatter = utils.format_message_array_google;
+			requester = this.google_request.bind(this);
+		} else if (this.is_openrouter()) {
+			requester = this.openrouter_request.bind(this);
 		} else {
-			[headers, data] = this.openai_request(raw ? conversation : utils.format_message_array_openai(conversation));
+			requester = this.openai_request.bind(this);
 		}
-		if (this.is_openrouter()) {  					// Fix this one thing if it's OpenRouter.
-			data["include_reasoning"] = true;
-		}
-		return [headers, data];
+
+		return requester(raw ? conversation : formatter(conversation));
+	},
+
+	parse_200_response: function(data) {
+		if (this.is_anthropic()) return utils.parse_200_response_anthropic(data);
+		if (this.is_google()) return utils.parse_200_response_google(data);
+		if (this.is_openrouter()) return utils.parse_200_response_openrouter(data, this.config.show_reasoning);
+		return utils.parse_200_response_openai(data);
 	},
 
 	send_conversation: function(conversation, raw = false, abortcontroller = null) {
@@ -291,15 +308,7 @@ const client_prototype = {
 			} else {
 				return response.json().then(data => {
 					this.last_receive = JSON.stringify(data);
-					if (this.is_anthropic()) {
-						return utils.parse_200_response_anthropic(data);
-					} else if (this.is_google()) {
-						return utils.parse_200_response_google(data);
-					} else if (this.is_openrouter()) {
-						return utils.parse_200_response_openrouter(data, this.config.show_reasoning);
-					} else {
-						return utils.parse_200_response_openai(data);
-					}
+					return this.parse_200_response(data);
 				}).then(result => {						// result is a string.
 					this.register_success();
 					return result;						// Thus the overall promise resolves to a string.
