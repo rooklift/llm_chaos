@@ -1,0 +1,10 @@
+{
+	"esversion": 11,
+	"loopfunc": true,
+	"node": true,
+	"sub": true,
+	"globals": {
+		"AbortController": true,
+		"fetch": true
+	}
+}

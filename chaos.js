@@ -113,7 +113,7 @@ const bot_prototype = {
 				last_handled: BigInt(-1),			// Snowflake (as BigInt) of the last thing we responsed to. Can be artificially set with !break
 			});
 
-			this.ai_client = ai.new_client(ai_config),
+			this.ai_client = ai.new_client(ai_config);
 			this.ai_client.set_api_key_from_file(cfg.llm_key_file);
 
 			this.conn = new discord.Client({intents: [
@@ -133,7 +133,7 @@ const bot_prototype = {
 						st.push(`  ${key.padEnd(12)} ${value[1].toString()}`);
 					}
 				}
-				st.push("\nChannel commands - can optionally send without ping, to affect every LLM:\n")
+				st.push("\nChannel commands - can optionally send without ping, to affect every LLM:\n");
 				for (let [key, value] of Object.entries(commands)) {
 					if (commands_that_can_be_sent_untargeted.includes(key)) {
 						st.push(`  ${key.padEnd(12)} ${value[1].toString()}`);
@@ -707,7 +707,7 @@ function check_bot_tokens(bot_configs) {
 		all[s] = true;
 	}
 	if (Object.keys(all).length !== bot_configs.length) {
-		throw new Error("check_bot_tokens: Duplicate tokens detected!")
+		throw new Error("check_bot_tokens: Duplicate tokens detected!");
 	}
 }
 
