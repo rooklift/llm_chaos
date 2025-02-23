@@ -1,0 +1,8 @@
+{
+	"name": "llm_chaos",
+	"version": "1.0.0",
+	"main": "bot.js",
+	"dependencies": {
+		"discord.js": "^14.18.0"
+	}
+}
