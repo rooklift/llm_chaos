@@ -117,11 +117,11 @@ const client_prototype = {
 	},
 
 	is_anthropic: function() {
-		return this.config.company.toUpperCase().includes("ANTHROPIC");
+		return this.config.url.toUpperCase().includes("ANTHROPIC");
 	},
 
 	is_google: function() {
-		return this.config.company.toUpperCase().includes("GOOGLE");
+		return this.config.url.toUpperCase().includes("GOOGLE");
 	},
 
 	is_openrouter: function() {
