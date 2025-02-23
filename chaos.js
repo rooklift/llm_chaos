@@ -746,5 +746,5 @@ Promise.all(bot_promises).then(arr => {
 		bot.start();
 	}
 	const time_str = (new Date()).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-	console.log(`Ready at: ${time_str}`);
+	console.log(`LLM chaos started at: ${time_str}`);
 });
