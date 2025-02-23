@@ -188,3 +188,14 @@ exports.format_timestamp = function(date) {
     const year = date.getFullYear();
     return `${hours}:${minutes}:${seconds} on ${month} ${day}, ${year}`;
 };
+
+exports.date_from_snowflake = function(snowflake) {		// Unused but good to have.
+	if (typeof snowflake === "string") {
+		snowflake = BigInt(snowflake);
+	}
+	if (typeof snowflake !== "bigint") {
+		throw new Error("date_from_snowflake: invalid argument");
+	}
+	let unixtime = BigInt(1420070400000) + (snowflake >> BigInt(22));
+	return new Date(Number(unixtime));
+};
