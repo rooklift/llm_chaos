@@ -230,31 +230,43 @@ const client_prototype = {
 		return [headers, data];
 	},
 
-	prepare_request: function(conversation, raw) {  			// raw flag means conversation is preformatted.
+	get_handlers: function() {
 
-		let formatter = utils.format_message_array_openai;		// Correct for most things (except Google at time of writing).
-		let requester;
-
-		if (this.is_anthropic()) {
-			requester = this.anthropic_request.bind(this);
-		} else if (this.is_google()) {
-			formatter = utils.format_message_array_google;
-			requester = this.google_request.bind(this);
-		} else if (this.is_openrouter()) {
-			requester = this.openrouter_request.bind(this);
-		} else {
-			requester = this.openai_request.bind(this);
+		if (this.is_anthropic()) return {
+			formatter: utils.format_message_array_openai,
+			maker:     this.anthropic_request.bind(this),
+			parser:    utils.parse_200_response_anthropic
 		}
 
-		return requester(raw ? conversation : formatter(conversation));
+		if (this.is_google()) return {
+			formatter: utils.format_message_array_google,
+			maker:     this.google_request.bind(this),
+			parser:    utils.parse_200_response_google
+		}
+
+		if (this.is_openrouter()) return {
+			formatter: utils.format_message_array_openai,
+			maker:     this.openrouter_request.bind(this),
+			parser:    (data) => utils.parse_200_response_openrouter(data, this.config.show_reasoning)
+		}
+
+		// Default, OpenAI or similar...
+		return {
+			formatter: utils.format_message_array_openai,
+			maker:     this.openai_request.bind(this),
+			parser:    utils.parse_200_response_openai
+		};
+	},
+
+	prepare_request: function(conversation, raw) {				// raw flag means conversation is preformatted
+		let { formatter, maker } = this.get_handlers();
+		return maker(raw ? conversation : formatter(conversation));
 	},
 
 	parse_200_response: function(data) {
-		if (this.is_anthropic()) return utils.parse_200_response_anthropic(data);
-		if (this.is_google()) return utils.parse_200_response_google(data);
-		if (this.is_openrouter()) return utils.parse_200_response_openrouter(data, this.config.show_reasoning);
-		return utils.parse_200_response_openai(data);
-	},
+		let { parser } = this.get_handlers();
+		return parser(data);
+	}
 
 	send_conversation: function(conversation, raw = false, abortcontroller = null) {
 		if (this.errors > this.config.max_errors) {
