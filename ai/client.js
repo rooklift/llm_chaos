@@ -236,19 +236,19 @@ const client_prototype = {
 			formatter: utils.format_message_array_openai,
 			maker:     this.anthropic_request.bind(this),
 			parser:    utils.parse_200_response_anthropic
-		}
+		};
 
 		if (this.is_google()) return {
 			formatter: utils.format_message_array_google,
 			maker:     this.google_request.bind(this),
 			parser:    utils.parse_200_response_google
-		}
+		};
 
 		if (this.is_openrouter()) return {
 			formatter: utils.format_message_array_openai,
 			maker:     this.openrouter_request.bind(this),
 			parser:    (data) => utils.parse_200_response_openrouter(data, this.config.show_reasoning)
-		}
+		};
 
 		// Default, OpenAI or similar...
 		return {
@@ -331,6 +331,6 @@ const client_prototype = {
 			}
 		});
 	},
-}
+};
 
 module.exports = new_client;
