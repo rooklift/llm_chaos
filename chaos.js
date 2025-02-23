@@ -250,11 +250,6 @@ const bot_prototype = {
 			if (msg.content.trim()) {
 				this.add_base_message_to_history(msg);		// Now's a good time to add the main msg to the history.
 			}
-//			results.sort((a, b) => {
-//				let filenameA = a.status === "fulfilled" ? a.value.filename : "";
-//				let filenameB = b.status === "fulfilled" ? b.value.filename : "";
-//				return filenameA.localeCompare(filenameB);
-//			});
 			for (let result of results) {
 				if (result.status === "fulfilled") {
 					this.add_attachment_to_history(msg, result.value);
