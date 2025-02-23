@@ -5,6 +5,7 @@
 	"sub": true,
 	"globals": {
 		"AbortController": true,
-		"fetch": true
+		"fetch": true,
+		"performance": true
 	}
 }
