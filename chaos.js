@@ -146,7 +146,7 @@ const bot_prototype = {
 			};
 
 			let commands = {	// Note that the first arg received by all of these will be msg. Then any other args (which most don't use).
-			"!abort":     [(msg, ...args) =>                 this.abort(msg, ...args), "Abort current request to LLM."                                     ],
+			"!abort":     [(msg, ...args) =>                 this.abort(msg, ...args), "Abort current operation. Bump last_handled marker."                ],
 			"!break":     [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !abort."                                                 ],
 			"!config":    [(msg, ...args) =>           this.send_config(msg, ...args), "Display LLM config in this channel."                               ],
 			"!effort":    [(msg, ...args) =>  this.set_reasoning_effort(msg, ...args), "Set reasoning effort (low / medium / high). Leave blank to clear." ],
