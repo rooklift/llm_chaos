@@ -99,7 +99,8 @@ const bot_prototype = {
 				conn: null,										// Connection to Discord.
 				chaos: cfg.chaos || 0,							// Chance of responding randomly to a non-ping.
 				emoji: cfg.emoji,								// Emoji used to acknowledge receipt of message.
-				history_limit: common.history_limit,			// Max history length.
+				ping_blind: cfg.ping_blind || false,			// Whether this LLM's ping recognition is suppressed.
+				history_limit: cfg.history_limit || common.history_limit,	// Max history length.
 				poll_wait: cfg.poll_wait || common.poll_wait,	// Delay for maybe_respond_spinner().
 				poll_id: null,									// setTimeout id, for cancellation.
 				history: [],									// Using only history_objects as defined above.
@@ -129,6 +130,7 @@ const bot_prototype = {
 			let commands = {	// Note that the first arg received by all of these will be msg. Then any other args (which most don't use).
 			"!abort":     [(msg, ...args) =>                 this.abort(msg, ...args), "Abort current operation. Bump last_handled marker."                ],
 			"!break":     [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !abort."                                                 ],
+			"!chaos":     [(msg, ...args) =>             this.set_chaos(msg, ...args), "Set chaos value (chance of responding to non-pings)."              ],
 			"!config":    [(msg, ...args) =>           this.send_config(msg, ...args), "Display LLM config in this channel."                               ],
 			"!effort":    [(msg, ...args) =>  this.set_reasoning_effort(msg, ...args), "Set reasoning effort (low / medium / high). Leave blank to clear." ],
 			"!help":      [(msg, ...args) =>                       help(msg, ...args), "Display this message."                                             ],
@@ -312,6 +314,20 @@ const bot_prototype = {
 		}
 	},
 
+	set_chaos: function(msg, val) {
+		let n = parseFloat(val);
+		if (Number.isNaN(n)) {
+			msg.channel.send("Invalid argument").catch(error => {
+				console.log(error);
+			});
+		} else {
+			this.chaos = n;
+			msg.channel.send(`Chaos: ${n > 9000 ? "Over 9000!" : n}`).catch(error => {
+				console.log(error);
+			});
+		}
+	},
+
 	set_history_limit: function(msg, val) {
 		let n = parseInt(val);
 		if (Number.isNaN(n) || n <= 0) {
@@ -388,7 +404,7 @@ const bot_prototype = {
 		`History length:  ${this.history.length} (max ${this.history_limit}) --> concats to ${this.count_concatenated_history()}\n` +
 		`History size:    ${hs} chars (approx ${Math.floor(hs / 3.6)} tokens)\n` +
 		`System prompt:   ${spl} chars (approx ${Math.floor(spl / 3.6)} tokens)\n` +
-		`Chaos:           ${this.chaos.toFixed(1)}\n` +
+		`Chaos:           ${this.chaos.toFixed(2)}\n` +
 		"```";
 		msg.channel.send(s).catch(error => {
 			console.log(error);
@@ -487,7 +503,7 @@ const bot_prototype = {
 			return false;
 		}
 		for (let o of this.history) {
-			if (!o.from_me && o.snow_big_int > this.last_handled && (o.pings_me || Math.random() < this.chaos)) {
+			if (!o.from_me && o.snow_big_int > this.last_handled && ((o.pings_me && !this.ping_blind) || Math.random() < this.chaos)) {
 				return true;
 			}
 		}
