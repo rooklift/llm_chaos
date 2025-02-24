@@ -5,7 +5,7 @@
 		"owner": "Alice"
 	},
 
-	"notes": "Mandatory keys in the ai_config are model, name, company, and url...",
+	"notes": "See ai/configs.js for all possible fields. Which ones are necessary will differ between LLMs.",
 
 	"included": [
 		{
