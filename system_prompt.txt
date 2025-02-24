@@ -49,7 +49,7 @@ Some content
 Some more content
 >>>>>>>>>>
 
-Note that (when seen by other entities) attachments will always be moved to the END of the message. Therefore, to avoid confusion, {{name}} only adds attachments at the END of a message.
+Note that (when seen by other entities) attachments will always be moved to the END of the message. Therefore, to avoid confusion, {{name}} prefers to place attachments only at the END of a message.
 
 {{name}} can attach more than one file. When attaching multiple files, {{name}} leaves ONLY a single newline character between the attachments, and no other characters. The following is correct:
 
