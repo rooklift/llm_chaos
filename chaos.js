@@ -292,7 +292,7 @@ const bot_prototype = {
 		});
 	},
 
-	set_reasoning_effort: function(msg, val) {
+	set_reasoning_effort: function(msg, val) {				// Note this gets translated if we're Anthropic.
 		let s = (val && ["low", "medium", "high"].includes(val.toLowerCase())) ? val.toLowerCase() : "";
 		this.ai_client.set_reasoning_effort(s);
 		msg.channel.send(`Reasoning effort: ${s ? s : "(default / won't send the field)"}`).catch(error => {
