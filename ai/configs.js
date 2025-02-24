@@ -27,9 +27,8 @@ exports.Defaults = {
 	system_prompt: "",				// Not sent if ""
 	temperature: -1,				// Not sent if -1
 	reasoning_effort: "",			// Not sent if ""			(OpenAI API)
-	anthropic_version: "",			// Not sent if ""			(Irrelevant for non-Anthropic LLMs)
-
 	budget_tokens: 0,				// Min 1024					(Anthropic API)
+	anthropic_version: "",			// Not sent if ""			(Irrelevant for non-Anthropic LLMs)
 
 	show_reasoning: false,
 	max_errors: 10,
