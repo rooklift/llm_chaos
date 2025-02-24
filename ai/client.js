@@ -89,8 +89,9 @@ const client_prototype = {
 	set_reasoning_effort: function(s) {
 		if (this.is_anthropic()) {				// reasoning_effort is the OpenAI name, but we can use this hacky translation...
 			this.set_budget_tokens(s === "high" ? 3072 : (s === "medium" ? 2048 : (s === "low" ? 1024 : 0)));
+		} else {
+			this.config.reasoning_effort = s;
 		}
-		this.config.reasoning_effort = s;		// Fine to set this anyway.
 	},
 
 	set_show_reasoning: function(foo) {			// This is OpenRouter only -- FIXME - use this for Claude also??
@@ -246,6 +247,12 @@ const client_prototype = {
 
 	get_handlers: function() {
 
+		if (this.is_openrouter()) return {
+			formatter: utils.format_message_array_openai,
+			maker:     this.openrouter_request.bind(this),
+			parser:    (data) => utils.parse_200_response_openrouter(data, this.config.show_reasoning)
+		};
+
 		if (this.is_anthropic()) return {
 			formatter: utils.format_message_array_openai,
 			maker:     this.anthropic_request.bind(this),
@@ -256,12 +263,6 @@ const client_prototype = {
 			formatter: utils.format_message_array_google,
 			maker:     this.google_request.bind(this),
 			parser:    utils.parse_200_response_google
-		};
-
-		if (this.is_openrouter()) return {
-			formatter: utils.format_message_array_openai,
-			maker:     this.openrouter_request.bind(this),
-			parser:    (data) => utils.parse_200_response_openrouter(data, this.config.show_reasoning)
 		};
 
 		// Default, OpenAI or similar...
