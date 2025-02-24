@@ -40,19 +40,27 @@ exports.parse_200_response_google = function(data) {
 	return ret_strings.join("\n\n");
 };
 
-exports.parse_200_response_anthropic = function(data) {
+exports.parse_200_response_anthropic = function(data, show_reasoning = false) {
 	if (!Array.isArray(data.content) || data.content.length === 0) {
 		throw new RequestError(200, JSON.stringify(data));
 	}
 	let ret_strings = [];
+	let thinking = null;
 	for (let part of data.content) {
 		if (typeof part !== "object" || part === null || !Object.hasOwn(part, "type")) {
 			ret_strings.push(`[response content included unreadable part]`);
+		} else if (part.type === "thinking" && typeof part.thinking === "string") {
+			thinking = part.thinking;
+		} else if (part.type === "redacted_thinking") {
+			continue;
 		} else if (part.type === "text" && typeof part.text === "string") {
 			ret_strings.push(part.text);
 		} else {
 			ret_strings.push(`[response content included unreadable "${part.type}" part]`);
 		}
+	}
+	if (thinking && show_reasoning) {
+		ret_strings.unshift("<think>\n" + thinking.trim() + "\n</think>");
 	}
 	return ret_strings.join("\n\n");
 };

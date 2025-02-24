@@ -87,11 +87,18 @@ const client_prototype = {
 	},
 
 	set_reasoning_effort: function(s) {
-		this.config.reasoning_effort = s;
+		if (this.is_anthropic()) {				// reasoning_effort is the OpenAI name, but we can use this hacky translation...
+			this.set_budget_tokens(s === "high" ? 3072 : (s === "medium" ? 2048 : (s === "low" ? 1024 : 0)));
+		}
+		this.config.reasoning_effort = s;		// Fine to set this anyway.
 	},
 
-	set_show_reasoning: function(foo) {
+	set_show_reasoning: function(foo) {			// This is OpenRouter only -- FIXME - use this for Claude also??
 		this.config.show_reasoning = Boolean(foo);
+	},
+
+	set_budget_tokens: function(n) {
+		this.budget_tokens = n;
 	},
 
 	register_success: function() {
@@ -157,6 +164,13 @@ const client_prototype = {
 
 		if (this.config.temperature >= 0) {
 			data.temperature = this.config.temperature;
+		}
+
+		if (this.budget_tokens > 0) {
+			data.thinking = {
+				budget_tokens: this.budget_tokens,
+				type: "enabled"
+			}
 		}
 
 		return [headers, data];
@@ -235,7 +249,7 @@ const client_prototype = {
 		if (this.is_anthropic()) return {
 			formatter: utils.format_message_array_openai,
 			maker:     this.anthropic_request.bind(this),
-			parser:    utils.parse_200_response_anthropic
+			parser:    (data) => utils.parse_200_response_anthropic(data, this.config.show_reasoning)
 		};
 
 		if (this.is_google()) return {
