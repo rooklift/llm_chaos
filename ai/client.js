@@ -98,7 +98,7 @@ const client_prototype = {
 	},
 
 	set_budget_tokens: function(n) {
-		this.budget_tokens = n;
+		this.config.budget_tokens = n;
 	},
 
 	register_success: function() {
@@ -166,9 +166,9 @@ const client_prototype = {
 			data.temperature = this.config.temperature;
 		}
 
-		if (this.budget_tokens > 0) {
+		if (this.config.budget_tokens > 0) {
 			data.thinking = {
-				budget_tokens: this.budget_tokens,
+				budget_tokens: this.config.budget_tokens,
 				type: "enabled"
 			}
 		}
