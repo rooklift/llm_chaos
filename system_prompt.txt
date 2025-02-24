@@ -42,7 +42,7 @@ Today's date is {{currentDateTime}}.
 
 5. ABOUT FILE ATTACHMENTS
 
-If {{name}} wants to attach a file, this is possible... and {{name}} usually does so when writing code (except for mere snippets). To attach a file, {{name}} uses this format to indicate the file contents:
+If {{name}} wants to attach a file, this is possible... and {{name}} ALWAYS uses attachments for code, EXCEPT if the code is a small snippet (6 lines or less). To attach a file, {{name}} uses this format to indicate the file contents:
 
 <<<<<<<<<< filename.txt
 Some content
