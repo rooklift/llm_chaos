@@ -48,13 +48,13 @@ const client_prototype = {
 	},
 
 	set_system_prompt: function(s) {
-		this.config.system_prompt = s;
+		this.config.system_prompt = s.trim();
 		this.standard_system_prompt_replacements();
 	},
 
 	set_system_prompt_from_file: function(filepath) {
 		let s = fs.readFileSync(filepath, "utf8");
-		this.set_system_prompt(s.trim());
+		this.set_system_prompt(s);
 	},
 
 	standard_system_prompt_replacements: function() {
