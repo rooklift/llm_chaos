@@ -356,6 +356,16 @@ const bot_prototype = {
 		}
 	},
 
+	set_all_history_handled: function() {						// Remember that some history objects have snow_big_int == -1 so don't trust
+		let biggest = BigInt(-1);								// that the last history item will be the largest, it might not be.
+		for (let item of this.history) {
+			if (item.snow_big_int > biggest) {
+				biggest = item.snow_big_int;
+			}
+		}
+		this.last_handled = biggest;							// NOTE TO SELF: there was a big bug when these were getting set to -1 sometimes!
+	},
+
 	send_config: function(msg) {
 		let foo = Object.assign({}, this.ai_client.config);
 		foo.system_prompt = "SYSTEM_PROMPT_MARKER";
@@ -484,9 +494,7 @@ const bot_prototype = {
 		// If we get here, we looked at the entire history without responding, so set this.last_handled.
 		// This is necessary because chaotic bots will always have some chance to reply to older messages,
 		// including on future calls to can_respond().
-		if (this.history.length > 0) {
-			this.last_handled = this.history[this.history.length - 1].snow_big_int;
-		}
+		this.set_all_history_handled();
 		return false;
 	},
 
@@ -510,10 +518,7 @@ const bot_prototype = {
 		if (last) {
 			last.react(this.emoji);							// The patented reply reaction emoji.
 		}
-
-		if (this.history.length > 0) {
-			this.last_handled = this.history[this.history.length - 1].snow_big_int;
-		}
+		this.set_all_history_handled()
 
 		let conversation = this.format_history();
 
