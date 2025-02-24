@@ -388,8 +388,8 @@ const bot_prototype = {
 		return msg.author.id === this.conn.user.id;
 	},
 
-	msg_mentions_me: function(msg) {
-		return msg.mentions.users.has(this.conn.user.id);
+	msg_mentions_me: function(msg) {												// Makes no attempt to recognise
+		return msg.mentions.users.has(this.conn.user.id);							// @everyone nor @role mentions.
 	},
 
 	cmd_from_msg: function(msg, untargeted) {
