@@ -521,6 +521,8 @@ const bot_prototype = {
 		this.cancelled = false;
 		this.ai_abortcontroller = new AbortController();
 
+		// Promise.resolve("I would have sent something.").catch(error => {		// Use this for testing.
+
 		this.ai_client.send_conversation(conversation, false, this.ai_abortcontroller).catch(error => {
 			if (error.name !== "AbortError") {
 				this.log(error);
