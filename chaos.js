@@ -9,8 +9,6 @@ const discord = require("discord.js");
 const helpers = require("./chaos_helpers");
 const fs = require("fs");
 
-const RESPOND_ONLY_TO_PINGS = true;
-
 // ------------------------------------------------------------------------------------------------
 // History objects storing only essential info out of a discord message, needed by the LLMs.
 
@@ -97,24 +95,26 @@ const bot_prototype = {
 			let ai_config = cfg.ai_config;
 
 			Object.assign(this, {
-				ai_client: null,					// Connection to the LLM via the ai library.
-				conn: null,							// Connection to Discord.
-				emoji: cfg.emoji,					// Emoji used to acknowledge receipt of message.
-				history_limit: common.history_limit,// Max history length.
-				poll_wait: common.poll_wait,		// Delay for maybe_respond_spinner().
-				poll_id: null,						// setTimeout id, for cancellation.
-				history: [],						// Using only history_objects as defined above.
-				queue: [],							// Messages (as Discord objects) waiting to be processed.
-				channel: null,						// The actual channel object, hopefully safe to store?
-				in_flight: false,					// Any http request in progress, to LLM or Discord? Value can be string indicating why.
-				ai_abortcontroller: null,			// AbortController for cancelling LLM requests only.
-				cancelled: false,					// Is the currently in-flight request to be discarded? Assume this can be true even if nothing in-flight!
-				last_msg: null,						// Last message received. Purely for emoji reactions.
-				last_handled: BigInt(-1),			// Snowflake (as BigInt) of the last thing we responsed to. Can be artificially set with !break
+				ai_client: null,								// Connection to the LLM via the ai library.
+				conn: null,										// Connection to Discord.
+				chaos: cfg.chaos || 0,							// Chance of responding randomly to a non-ping.
+				emoji: cfg.emoji,								// Emoji used to acknowledge receipt of message.
+				history_limit: common.history_limit,			// Max history length.
+				poll_wait: cfg.poll_wait || common.poll_wait,	// Delay for maybe_respond_spinner().
+				poll_id: null,									// setTimeout id, for cancellation.
+				history: [],									// Using only history_objects as defined above.
+				queue: [],										// Messages (as Discord objects) waiting to be processed.
+				channel: null,									// The actual channel object, hopefully safe to store?
+				in_flight: false,								// Any http request in progress, to LLM or Discord? Value can be string indicating why.
+				ai_abortcontroller: null,						// AbortController for cancelling LLM requests only.
+				cancelled: false,								// Assume this can be true even if nothing in-flight!
+				last_msg: null,									// Last message received. Purely for emoji reactions.
+				last_handled: BigInt(-1),						// Snowflake (as BigInt) of the last thing we responsed to. Can be artificially set with !break
 			});
 
 			this.ai_client = ai.new_client(ai_config);
 			this.ai_client.set_api_key_from_file(cfg.llm_key_file);
+			this.ai_client.set_system_prompt_from_file(cfg.system_prompt || "./system_prompt.txt");
 
 			this.conn = new discord.Client({intents: [
 				discord.GatewayIntentBits.Guilds,
@@ -378,6 +378,7 @@ const bot_prototype = {
 		`History length:  ${this.history.length} (max ${this.history_limit}) --> concats to ${this.count_concatenated_history()}\n` +
 		`History size:    ${hs} chars (approx ${Math.floor(hs / 3.6)} tokens)\n` +
 		`System prompt:   ${spl} chars (approx ${Math.floor(spl / 3.6)} tokens)\n` +
+		`Chaos:           ${this.chaos.toFixed(1)}\n` +
 		"```";
 		msg.channel.send(s).catch(error => {
 			console.log(error);
@@ -476,9 +477,15 @@ const bot_prototype = {
 			return false;
 		}
 		for (let o of this.history) {
-			if (!o.from_me && o.snow_big_int > this.last_handled && (o.pings_me || !RESPOND_ONLY_TO_PINGS)) {
+			if (!o.from_me && o.snow_big_int > this.last_handled && (o.pings_me || Math.random() < this.chaos)) {
 				return true;
 			}
+		}
+		// If we get here, we looked at the entire history without responding, so set this.last_handled.
+		// This is necessary because chaotic bots will always have some chance to reply to older messages,
+		// including on future calls to can_respond().
+		if (this.history.length > 0) {
+			this.last_handled = this.history[this.history.length - 1].snow_big_int;
 		}
 		return false;
 	},
@@ -740,12 +747,11 @@ Promise.all(bot_promises).then(arr => {
 	}
 	let system_header_example = normal_system_header({author_tag: "exampleuser", author_type: "human", author_id: "1234567890"}).trim();
 	for (let bot of bots) {
-		bot.ai_client.set_system_prompt_from_file("system_prompt.txt");
-		bot.ai_client.replace_in_system_prompt("{{userName}}", bot.conn.user.tag);
-		bot.ai_client.replace_in_system_prompt("{{userId}}", bot.conn.user.id);
-		bot.ai_client.replace_in_system_prompt("{{systemHeaderExample}}", system_header_example);
-		bot.ai_client.replace_in_system_prompt("{{modelsInTheServer}}", all_llm_info.join("\n"));
-		bot.ai_client.replace_in_system_prompt("{{serverOwner}}", common.owner);
+		bot.ai_client.replace_in_system_prompt("{{userName}}", bot.conn.user.tag, true);
+		bot.ai_client.replace_in_system_prompt("{{userId}}", bot.conn.user.id, true);
+		bot.ai_client.replace_in_system_prompt("{{systemHeaderExample}}", system_header_example, true);
+		bot.ai_client.replace_in_system_prompt("{{modelsInTheServer}}", all_llm_info.join("\n"), true);
+		bot.ai_client.replace_in_system_prompt("{{serverOwner}}", common.owner, true);
 		bot.start();
 	}
 	console.log(`         Script date: ${helpers.format_timestamp(fs.statSync(__filename).mtime)}`);
