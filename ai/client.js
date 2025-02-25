@@ -103,19 +103,11 @@ const client_prototype = {
 	},
 
 	register_success: function() {
-		this.delay = utils.clamp(
-			this.config.min_delay,
-			this.delay / 2,
-			this.config.max_delay
-		);
+		this.delay = utils.clamp(this.config.min_delay, this.delay / 2, this.config.max_delay);
 	},
 
 	register_failure: function() {
-		this.delay = utils.clamp(
-			this.config.min_delay,
-			this.delay * 2,
-			this.config.max_delay
-		);
+		this.delay = utils.clamp(this.config.min_delay, this.delay * 2, this.config.max_delay);
 		this.next_permitted_send = performance.now() + (this.delay * 1000);
 		this.errors += 1;
 	},
