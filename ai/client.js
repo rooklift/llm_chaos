@@ -94,7 +94,7 @@ const client_prototype = {
 		}
 	},
 
-	set_show_reasoning: function(foo) {			// This is OpenRouter only -- FIXME - use this for Claude also??
+	set_show_reasoning: function(foo) {
 		this.config.show_reasoning = Boolean(foo);
 	},
 
