@@ -530,7 +530,7 @@ const bot_prototype = {
 		// Regardless of what actually triggered the response, it's reasonable to consider us as reacting to the last message
 		// in the history, since we see up to that point.
 
-		let last = this.last_msg;
+		let last = this.last_msg;							// Note that this is actually last-non-self-message
 		if (last) {
 			last.react(this.emoji);							// The patented reply reaction emoji.
 		}
