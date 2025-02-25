@@ -336,6 +336,7 @@ const bot_prototype = {
 			});
 		} else {
 			this.history_limit = n;
+			this.truncate_history(n);
 			msg.channel.send(`Max history: ${n}`).catch(error => {
 				console.log(error);
 			});
