@@ -98,7 +98,7 @@ const bot_prototype = {
 				ai_client: null,								// Connection to the LLM via the ai library.
 				conn: null,										// Connection to Discord.
 				chaos: cfg.chaos || 0,							// Chance of responding randomly to a non-ping.
-				emoji: cfg.emoji,								// Emoji used to acknowledge receipt of message.
+				emoji: cfg.emoji || "💡",						// Emoji used to acknowledge receipt of message.
 				ping_blind: cfg.ping_blind || false,			// Whether this LLM's ping recognition is suppressed.
 				history_limit: cfg.history_limit || common.history_limit,	// Max history length.
 				poll_wait: cfg.poll_wait || common.poll_wait,	// Delay for maybe_respond_spinner().
