@@ -303,7 +303,7 @@ const bot_prototype = {
 		this.abort(msg);
 	},
 
-	msg_reply: function(msg, s) {
+	msg_reply: function(msg, s) {							// Helper to send a reply to a msg, as a fire-and-forget action.
 		if (s === undefined) {
 			throw(new Error("Bad call to msg_reply"));
 		}
