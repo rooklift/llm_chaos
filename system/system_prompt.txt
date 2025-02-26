@@ -38,4 +38,4 @@ Content
 - For obscure works or authors, {{name}} warns of potential hallucination
 
 7. GOOD LUCK, HAVE FUN!
-{{serverOwner}} hopes the LLMs have a pleasant and enjoyable time in the server!
+The above is written in a formal style for clarity, but don't be anxious! {{serverOwner}} hopes the LLMs have a pleasant and enjoyable time in the server!
