@@ -460,9 +460,7 @@ const bot_prototype = {
 		if (!this.msg_mentions_me(msg)) {
 			return default_result;
 		}
-		let content = msg.content;
-		content = content.replaceAll(`<@${this.conn.user.id}>`, "");				// Remove all mentions of the bot
-		content = content.replaceAll(`<@!${this.conn.user.id}>`, "");				// Allegedly this ping format exists sometimes?
+		let content = msg.content.replace(/<@!?\d+>/g, "");							// Purge all pings. <@12345> and <@!12345> formats.
 		let parts = content.split(" ").map(s => s.trim()).filter(z => z !== "");
 		if (parts.length > 0 && parts[0].startsWith("!")) {
 			let cmd = parts[0];
