@@ -331,11 +331,12 @@ const bot_prototype = {
 	set_reasoning_effort: function(msg, val) {				// But I want to use this for Anthropic too...
 
 		let as_num = parseInt(val);
+		let s = "";
 
 		if (this.ai_client.is_anthropic() && !Number.isNaN(as_num)) {
 			this.ai_client.set_budget_tokens(as_num);
 		} else {
-			let s = (typeof val === "string" && ["low", "medium", "high"].includes(val.toLowerCase())) ? val.toLowerCase() : "";
+			s = (typeof val === "string" && ["low", "medium", "high"].includes(val.toLowerCase())) ? val.toLowerCase() : "";
 			this.ai_client.set_reasoning_effort(s);
 		}
 
