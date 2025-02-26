@@ -137,6 +137,7 @@ const bot_prototype = {
 
 			let commands = {	// Note that the first arg received by all of these will be msg. Then any other args (which most don't use).
 			"!abort":     [(msg, ...args) =>                 this.abort(msg, ...args), "Abort current operation. Bump last_handled marker."                ],
+			"!blind":     [(msg, ...args) =>         this.set_blindness(msg, ...args), "Set / toggle being ping-blind." ],
 			"!break":     [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !abort."                                                 ],
 			"!chaos":     [(msg, ...args) =>             this.set_chaos(msg, ...args), "Set chaos value (chance of responding to non-pings)."              ],
 			"!config":    [(msg, ...args) =>           this.send_config(msg, ...args), "Display LLM config in this channel."                               ],
@@ -147,7 +148,6 @@ const bot_prototype = {
 			"!memory":    [(msg, ...args) =>     this.set_history_limit(msg, ...args), "Set the number of messages saved in the history."                  ],
 			"!output":    [(msg, ...args) =>       this.log_last_output(msg, ...args), "Dump the last body received from the LLM's API to the console."    ],
 			"!poll":      [(msg, ...args) =>         this.set_poll_wait(msg, ...args), "Set the polling delay in milliseconds."                            ],
-			"!reasoning": [(msg, ...args) =>  this.set_reasoning_effort(msg, ...args), "Alias for !effort."                                                ],
 			"!reload":    [(msg, ...args) =>     this.set_system_prompt(msg, ...args), "Reload the system prompt from disk."                               ],
 			"!reset":     [(msg, ...args) =>                 this.reset(msg, ...args), "Clear the history. Make the LLM use this channel."                 ],
 			"!show":      [(msg, ...args) =>    this.set_show_reasoning(msg, ...args), "Set / toggle showing reasoning (if available) inline in the text." ],
@@ -214,8 +214,11 @@ const bot_prototype = {
 			let company = bot.ai_client.config.company;
 			let tag = bot.conn.user.tag;
 			let id = bot.conn.user.id;
-			let special = (bot.chaos > 0 || bot.ping_blind) ? "  <-- this one has some unusual settings" : "";
-			all_llm_info.push(`${nameversion} created by ${company}, username ${tag} -- ping with <@${id}>${special}`);
+			let special = [];
+			if (bot.chaos > 0) special.push("chaotic");
+			if (bot.ping_blind) special.push("ping-blind");
+			let special_string = special.length ? `  <-- special flags: ${special.join(", ")}` : "";
+			all_llm_info.push(`${nameversion} created by ${company}, username ${tag} -- ping with <@${id}>${special_string}`);
 		}
 
 		let system_header_example = normal_system_header({author_tag: "exampleuser", author_type: "human", author_id: "1234567890"}).trim();
@@ -316,6 +319,17 @@ const bot_prototype = {
 		msg.channel.send(s).catch(error => {
 			console.log(error);
 		});
+	},
+
+	set_blindness: function(msg, val) {
+		if (val && ["FALSE", "OFF"].includes(val.toUpperCase())) {
+			this.ping_blind = false;
+		} else if (val && ["TRUE", "ON"].includes(val.toUpperCase())) {
+			this.ping_blind = true;
+		} else {
+			this.ping_blind = !this.ping_blind;
+		}
+		this.msg_reply(msg, `Ping blind: ${this.ping_blind}`);
 	},
 
 	set_show_reasoning: function(msg, val) {
