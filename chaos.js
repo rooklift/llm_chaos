@@ -206,18 +206,23 @@ const bot_prototype = {
 	set_system_prompt: function() {
 
 		let all_llm_info = [];
+
 		for (let bot of bots) {
+
 			let nameversion = bot.ai_client.config.name;
 			if (bot.ai_client.config.version) {
 				nameversion += " " + bot.ai_client.config.version;
 			}
+
 			let company = bot.ai_client.config.company;
 			let tag = bot.conn.user.tag;
 			let id = bot.conn.user.id;
+
 			let special = [];
 			if (bot.chaos > 0) special.push("chaotic");
 			if (bot.ping_blind) special.push("ping-blind");
 			let special_string = special.length ? `  <-- special flags: ${special.join(", ")}` : "";
+
 			all_llm_info.push(`${nameversion} created by ${company}, username ${tag} -- ping with <@${id}>${special_string}`);
 		}
 
