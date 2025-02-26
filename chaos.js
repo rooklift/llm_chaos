@@ -635,7 +635,7 @@ const bot_prototype = {
 		// array is from me, concatenating messages as required to maintain this goal.
 
 		const SYSTEM_START = "[[ New messages received! ]]";
-		const SYSTEM_END = "[[ End of new messages. You can reply! Please do not add system headers. ]]";
+		const SYSTEM_END = "[[ You can reply! Please do not add system headers. ]]";
 
 		let ret = [];
 		let current_block = [];
@@ -644,7 +644,7 @@ const bot_prototype = {
 		const push_block = () => {					// Helper to finalize and store the current block.
 			if (current_block.length > 0) {
 				if (!reading_own_messages) {
-					ret.push([SYSTEM_START, ...current_block, SYSTEM_END].join("\n\n"));
+					ret.push([ /* SYSTEM_START, */ ...current_block, SYSTEM_END].join("\n\n"));
 				} else {
 					ret.push(current_block.join("\n\n"));
 				}
