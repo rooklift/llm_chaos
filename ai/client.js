@@ -88,7 +88,7 @@ const client_prototype = {
 
 	set_reasoning_effort: function(s) {
 		if (this.is_anthropic()) {				// reasoning_effort is the OpenAI name, but we can use this hacky translation...
-			this.set_budget_tokens(s === "high" ? 3072 : (s === "medium" ? 2048 : (s === "low" ? 1024 : 0)));
+			this.set_budget_tokens(s === "high" ? 8192 : (s === "medium" ? 3072 : (s === "low" ? 1024 : 0)));
 		} else {
 			this.config.reasoning_effort = s;
 		}
