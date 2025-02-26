@@ -9,6 +9,8 @@ const discord = require("discord.js");
 const helpers = require("./chaos_helpers");
 const fs = require("fs");
 
+process.chdir(__dirname);
+
 const DEFAULT_SYSTEM_PROMPT = "./system/system_prompt.txt";
 const CONFIG_FILE = "./config.json";
 
