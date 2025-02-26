@@ -9,6 +9,9 @@ const discord = require("discord.js");
 const helpers = require("./chaos_helpers");
 const fs = require("fs");
 
+const DEFAULT_SYSTEM_PROMPT = "./system/system_prompt.txt";
+const CONFIG_FILE = "./config.json";
+
 let bots = [];
 
 // ------------------------------------------------------------------------------------------------
@@ -102,7 +105,7 @@ const bot_prototype = {
 				chaos: cfg.chaos || 0,							// Chance of responding randomly to a non-ping.
 				emoji: cfg.emoji || "💡",						// Emoji used to acknowledge receipt of message.
 				owner: common.owner,							// Name of the human in charge...
-				sp_location: cfg.system_prompt || "./system_prompt.txt",	// Location of the system prompt, for (re)loading.
+				sp_location: cfg.system_prompt || DEFAULT_SYSTEM_PROMPT,	// Location of the system prompt, for (re)loading.
 				ping_blind: cfg.ping_blind || false,			// Whether this LLM's ping recognition is suppressed.
 				history_limit: cfg.history_limit || common.history_limit,	// Max history length.
 				poll_wait: cfg.poll_wait || common.poll_wait,	// Delay for maybe_respond_spinner().
@@ -767,7 +770,7 @@ function check_bot_tokens(bot_configs) {
 
 function main() {
 
-	let config = JSON.parse(fs.readFileSync("config.json"));
+	let config = JSON.parse(fs.readFileSync(CONFIG_FILE));
 	let common = config.common;
 
 	check_bot_tokens(config.included);
@@ -784,7 +787,7 @@ function main() {
 			bot.start();			// Requires the bots array to be finalised first as the system prompt needs it.
 		}
 		console.log(`         Script date: ${helpers.format_timestamp(fs.statSync(__filename).mtime)}`);
-		console.log(`  System prompt date: ${helpers.format_timestamp(fs.statSync("system_prompt.txt").mtime)}`);
+		console.log(`  System prompt date: ${helpers.format_timestamp(fs.statSync(DEFAULT_SYSTEM_PROMPT).mtime)}`);
 		console.log(`LLM chaos started at: ${helpers.format_timestamp(new Date())}`);
 	});
 }
