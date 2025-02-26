@@ -66,7 +66,7 @@ function attachment_system_header(o) {
 // ------------------------------------------------------------------------------------------------
 // Given some LLM output, extract the main text and any file attachments...
 
-function create_text_and_attachments(text) {				// Mostly written by GPT-4o
+function create_text_and_attachments(text) {				// Regex by GPT-4o
 
 	let re = /<{5,20} ([^\n]+)\n([\s\S]*?)>{5,20}/g;		// Allow marker sizes <<<<< to <<<<<<<<<<<<<<<<<<<<
 
