@@ -163,7 +163,7 @@ const client_prototype = {
 			data.thinking = {
 				budget_tokens: this.config.budget_tokens,
 				type: "enabled"
-			}
+			};
 		}
 
 		return [headers, data];

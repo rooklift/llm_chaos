@@ -564,7 +564,7 @@ const bot_prototype = {
 		if (last) {
 			last.react(this.emoji);							// The patented reply reaction emoji.
 		}
-		this.set_all_history_handled()
+		this.set_all_history_handled();
 
 		let conversation = this.format_history();
 
