@@ -9,6 +9,8 @@ const discord = require("discord.js");
 const helpers = require("./chaos_helpers");
 const fs = require("fs");
 
+let bots = [];
+
 // ------------------------------------------------------------------------------------------------
 // History objects storing only essential info out of a discord message, needed by the LLMs.
 
@@ -99,6 +101,8 @@ const bot_prototype = {
 				conn: null,										// Connection to Discord.
 				chaos: cfg.chaos || 0,							// Chance of responding randomly to a non-ping.
 				emoji: cfg.emoji || "💡",						// Emoji used to acknowledge receipt of message.
+				owner: common.owner,							// Name of the human in charge...
+				sp_location: cfg.system_prompt || "./system_prompt.txt",	// Location of the system prompt, for (re)loading.
 				ping_blind: cfg.ping_blind || false,			// Whether this LLM's ping recognition is suppressed.
 				history_limit: cfg.history_limit || common.history_limit,	// Max history length.
 				poll_wait: cfg.poll_wait || common.poll_wait,	// Delay for maybe_respond_spinner().
@@ -115,7 +119,6 @@ const bot_prototype = {
 
 			this.ai_client = ai.new_client(ai_config);
 			this.ai_client.set_api_key_from_file(cfg.llm_key_file);
-			this.ai_client.set_system_prompt_from_file(cfg.system_prompt || "./system_prompt.txt");
 
 			this.conn = new discord.Client({intents: [
 				discord.GatewayIntentBits.Guilds,
@@ -140,6 +143,7 @@ const bot_prototype = {
 			"!output":    [(msg, ...args) =>       this.log_last_output(msg, ...args), "Dump the last body received from the LLM's API to the console."    ],
 			"!poll":      [(msg, ...args) =>         this.set_poll_wait(msg, ...args), "Set the polling delay in milliseconds."                            ],
 			"!reasoning": [(msg, ...args) =>  this.set_reasoning_effort(msg, ...args), "Alias for !effort."                                                ],
+			"!reload":    [(msg, ...args) =>     this.set_system_prompt(msg, ...args), "Reload the system prompt from disk."                               ],
 			"!reset":     [(msg, ...args) =>                 this.reset(msg, ...args), "Clear the history. Make the LLM use this channel."                 ],
 			"!show":      [(msg, ...args) =>    this.set_show_reasoning(msg, ...args), "Set / toggle showing reasoning (if available) inline in the text." ],
 			"!status":    [(msg, ...args) =>           this.send_status(msg, ...args), "Display essential bot status info in this channel."                ],
@@ -191,8 +195,33 @@ const bot_prototype = {
 	},
 
 	start: function() {
+		this.set_system_prompt();
 		this.maybe_respond_spinner();
 		this.process_queue_spinner();
+	},
+
+	set_system_prompt: function() {
+
+		let all_llm_info = [];
+		for (let bot of bots) {
+			let nameversion = bot.ai_client.config.name;
+			if (bot.ai_client.config.version) {
+				nameversion += " " + bot.ai_client.config.version;
+			}
+			let company = bot.ai_client.config.company;
+			let tag = bot.conn.user.tag;
+			let id = bot.conn.user.id;
+			all_llm_info.push(`${nameversion} created by ${company}, username ${tag} -- ping with <@${id}>`);
+		}
+
+		let system_header_example = normal_system_header({author_tag: "exampleuser", author_type: "human", author_id: "1234567890"}).trim();
+
+		this.ai_client.set_system_prompt_from_file(this.sp_location);
+		this.ai_client.replace_in_system_prompt("{{userName}}", this.conn.user.tag, true);
+		this.ai_client.replace_in_system_prompt("{{userId}}", this.conn.user.id, true);
+		this.ai_client.replace_in_system_prompt("{{systemHeaderExample}}", system_header_example, true);
+		this.ai_client.replace_in_system_prompt("{{modelsInTheServer}}", all_llm_info.join("\n"), true);
+		this.ai_client.replace_in_system_prompt("{{serverOwner}}", this.owner, true);
 	},
 
 	process_queue: function() {
@@ -744,41 +773,28 @@ function check_bot_tokens(bot_configs) {
 
 // ------------------------------------------------------------------------------------------------
 
-let config = JSON.parse(fs.readFileSync("config.json"));
-let common = config.common;
+function main() {
 
-check_bot_tokens(config.included);
+	let config = JSON.parse(fs.readFileSync("config.json"));
+	let common = config.common;
 
-let bot_promises = [];
-let bots = [];
+	check_bot_tokens(config.included);
 
-for (let bot_cfg of config.included) {
-	bot_promises.push(new_bot(bot_cfg, common));
+	let bot_promises = [];
+
+	for (let bot_cfg of config.included) {
+		bot_promises.push(new_bot(bot_cfg, common));
+	}
+
+	Promise.all(bot_promises).then(arr => {
+		bots = arr;
+		for (let bot of bots) {
+			bot.start();			// Requires the bots array to be finalised first as the system prompt needs it.
+		}
+		console.log(`         Script date: ${helpers.format_timestamp(fs.statSync(__filename).mtime)}`);
+		console.log(`  System prompt date: ${helpers.format_timestamp(fs.statSync("system_prompt.txt").mtime)}`);
+		console.log(`LLM chaos started at: ${helpers.format_timestamp(new Date())}`);
+	});
 }
 
-Promise.all(bot_promises).then(arr => {
-	bots = arr;
-	let all_llm_info = [];
-	for (let bot of bots) {
-		let nameversion = bot.ai_client.config.name;
-		if (bot.ai_client.config.version) {
-			nameversion += " " + bot.ai_client.config.version;
-		}
-		let company = bot.ai_client.config.company;
-		let tag = bot.conn.user.tag;
-		let id = bot.conn.user.id;
-		all_llm_info.push(`${nameversion} created by ${company}, username ${tag} -- ping with <@${id}>`);
-	}
-	let system_header_example = normal_system_header({author_tag: "exampleuser", author_type: "human", author_id: "1234567890"}).trim();
-	for (let bot of bots) {
-		bot.ai_client.replace_in_system_prompt("{{userName}}", bot.conn.user.tag, true);
-		bot.ai_client.replace_in_system_prompt("{{userId}}", bot.conn.user.id, true);
-		bot.ai_client.replace_in_system_prompt("{{systemHeaderExample}}", system_header_example, true);
-		bot.ai_client.replace_in_system_prompt("{{modelsInTheServer}}", all_llm_info.join("\n"), true);
-		bot.ai_client.replace_in_system_prompt("{{serverOwner}}", common.owner, true);
-		bot.start();
-	}
-	console.log(`         Script date: ${helpers.format_timestamp(fs.statSync(__filename).mtime)}`);
-	console.log(`  System prompt date: ${helpers.format_timestamp(fs.statSync("system_prompt.txt").mtime)}`);
-	console.log(`LLM chaos started at: ${helpers.format_timestamp(new Date())}`);
-});
+main();
