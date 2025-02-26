@@ -133,6 +133,7 @@ const bot_prototype = {
 			let commands = {	// Note that the first arg received by all of these will be msg. Then any other args (which most don't use).
 			"!abort":     [(msg, ...args) =>                 this.abort(msg, ...args), "Abort current operation. Bump last_handled marker."                ],
 			"!break":     [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !abort."                                                 ],
+			"!budget":    [(msg, ...args) =>   this.set_thinking_budget(msg, ...args), "Set budget tokens (Anthropic / Claude 3.7 only)."                  ],
 			"!chaos":     [(msg, ...args) =>             this.set_chaos(msg, ...args), "Set chaos value (chance of responding to non-pings)."              ],
 			"!config":    [(msg, ...args) =>           this.send_config(msg, ...args), "Display LLM config in this channel."                               ],
 			"!effort":    [(msg, ...args) =>  this.set_reasoning_effort(msg, ...args), "Set reasoning effort (low / medium / high). Leave blank to clear." ],
@@ -327,6 +328,12 @@ const bot_prototype = {
 		let s = (val && ["low", "medium", "high"].includes(val.toLowerCase())) ? val.toLowerCase() : "";
 		this.ai_client.set_reasoning_effort(s);
 		this.msg_reply(msg, `Reasoning effort: ${s ? s : "default / won't send the field"}`);
+	},
+
+	set_thinking_budget: function(msg, val) {
+		let n = parseInt(val) || 0;
+		this.ai_client.set_budget_tokens(n);
+		this.msg_reply(msg, `Thinking budget: ${n > 0 ? n : "default / won't send the field"}`);
 	},
 
 	set_max_tokens: function(msg, val) {
