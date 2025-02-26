@@ -303,13 +303,13 @@ const bot_prototype = {
 		this.abort(msg);
 	},
 
-	msg_reply(msg, s) {
+	msg_reply: function(msg, s) {
 		if (s === undefined) {
 			throw(new Error("Bad call to msg_reply"));
 		}
 		msg.channel.send(s).catch(error => {
 			console.log(error);
-		}
+		});
 	},
 
 	set_show_reasoning: function(msg, val) {
