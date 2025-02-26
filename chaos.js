@@ -167,9 +167,7 @@ const bot_prototype = {
 					}
 				}
 				st.push("```");
-				msg.channel.send(st.join("\n")).catch(error => {
-					console.log(error);
-				});
+				this.msg_reply(msg, st.join("\n"));
 			};
 
 			this.conn.on("messageCreate", (msg) => {
@@ -238,10 +236,7 @@ const bot_prototype = {
 			}
 			if (this.channel.id !== msg.channelId) {		// msg is not in the valid channel, so skip.
 				if (this.msg_mentions_me(msg)) {
-					// Fire and forget...
-					msg.channel.send("The LLM is not currently listening to this channel. Use !reset if you dare.").catch(error => {
-						console.log(error);
-					});
+					this.msg_reply(msg, "The LLM is not currently listening to this channel. Use !reset if you dare.");
 				}
 				continue;
 			}
@@ -308,6 +303,15 @@ const bot_prototype = {
 		this.abort(msg);
 	},
 
+	msg_reply(msg, s) {
+		if (s === undefined) {
+			throw(new Error("Bad call to msg_reply"));
+		}
+		msg.channel.send(s).catch(error => {
+			console.log(error);
+		}
+	},
+
 	set_show_reasoning: function(msg, val) {
 		if (val && ["FALSE", "OFF"].includes(val.toUpperCase())) {
 			this.ai_client.set_show_reasoning(false);
@@ -316,77 +320,57 @@ const bot_prototype = {
 		} else {
 			this.ai_client.set_show_reasoning(!this.ai_client.config.show_reasoning);
 		}
-		msg.channel.send(`Show reasoning: ${this.ai_client.config.show_reasoning}`).catch(error => {
-			console.log(error);
-		});
+		this.msg_reply(msg, `Show reasoning: ${this.ai_client.config.show_reasoning}`);
 	},
 
 	set_reasoning_effort: function(msg, val) {				// Note this gets translated if we're Anthropic.
 		let s = (val && ["low", "medium", "high"].includes(val.toLowerCase())) ? val.toLowerCase() : "";
 		this.ai_client.set_reasoning_effort(s);
-		msg.channel.send(`Reasoning effort: ${s ? s : "(default / won't send the field)"}`).catch(error => {
-			console.log(error);
-		});
+		this.msg_reply(msg, `Reasoning effort: ${s ? s : "default / won't send the field"}`);
 	},
 
 	set_max_tokens: function(msg, val) {
 		let n = parseInt(val);
 		if (Number.isNaN(n) || n <= 0) {
-			msg.channel.send("Invalid argument").catch(error => {
-				console.log(error);
-			});
+			this.msg_reply(msg, "Invalid argument");
 		} else {
 			this.ai_client.set_max_tokens(n);
-			msg.channel.send(`Max tokens: ${n}`).catch(error => {
-				console.log(error);
-			});
+			this.msg_reply(msg, `Max tokens: ${n}`);
 		}
 	},
 
 	set_chaos: function(msg, val) {
 		let n = parseFloat(val);
 		if (Number.isNaN(n)) {
-			msg.channel.send("Invalid argument").catch(error => {
-				console.log(error);
-			});
+			this.msg_reply(msg, "Invalid argument");
 		} else {
 			this.chaos = n;
-			msg.channel.send(`Chaos: ${n > 9000 ? "Over 9000!" : n}`).catch(error => {
-				console.log(error);
-			});
+			this.msg_reply(msg, `Chaos: ${n > 9000 ? "Over 9000!" : n}`);
 		}
 	},
 
 	set_history_limit: function(msg, val) {
 		let n = parseInt(val);
 		if (Number.isNaN(n) || n <= 0) {
-			msg.channel.send("Invalid argument").catch(error => {
-				console.log(error);
-			});
+			this.msg_reply(msg, "Invalid argument");
 		} else {
 			this.history_limit = n;
 			this.truncate_history(n);
-			msg.channel.send(`Max history: ${n}`).catch(error => {
-				console.log(error);
-			});
+			this.msg_reply(msg, `Max history: ${n}`);
 		}
 	},
 
 	set_poll_wait: function(msg, val) {
 		let n = parseInt(val);
 		if (Number.isNaN(n) || n <= 0) {
-			msg.channel.send("Invalid argument").catch(error => {
-				console.log(error);
-			});
+			this.msg_reply(msg, "Invalid argument");
 		} else {
 			if (this.poll_id) {
 				clearTimeout(this.poll_id);
 				this.poll_id = null;
 			}
 			this.poll_wait = n;
-			msg.channel.send(`Polling delay: ${n} milliseconds`).catch(error => {
-				console.log(error);
-			});
+			this.msg_reply(msg, `Polling delay: ${n} milliseconds`);
 			this.maybe_respond_spinner();						// Restart the polling loop.
 		}
 	},
@@ -417,9 +401,7 @@ const bot_prototype = {
 		foo.system_prompt = "SYSTEM_PROMPT_MARKER";
 		let s = JSON.stringify(foo, null, 4);
 		s = s.replaceAll("\"SYSTEM_PROMPT_MARKER\"", `[${this.ai_client.config.system_prompt.length} characters]`);
-		msg.channel.send("```\n" + s.trim() + "\n```").catch(error => {
-			console.log(error);
-		});
+		this.msg_reply(msg, "```\n" + s.trim() + "\n```");
 	},
 
 	send_status: function(msg) {
@@ -436,9 +418,7 @@ const bot_prototype = {
 		`System prompt:   ${spl} chars (approx ${Math.floor(spl / 3.6)} tokens)\n` +
 		`Chaos:           ${this.chaos.toFixed(2)}\n` +
 		"```";
-		msg.channel.send(s).catch(error => {
-			console.log(error);
-		});
+		this.msg_reply(msg, s);
 	},
 
 	msg_is_mine: function(msg) {
