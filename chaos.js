@@ -214,7 +214,8 @@ const bot_prototype = {
 			let company = bot.ai_client.config.company;
 			let tag = bot.conn.user.tag;
 			let id = bot.conn.user.id;
-			all_llm_info.push(`${nameversion} created by ${company}, username ${tag} -- ping with <@${id}>`);
+			let special = (bot.chaos > 0 || bot.ping_blind) ? "  <-- this one has some unusual settings" : "";
+			all_llm_info.push(`${nameversion} created by ${company}, username ${tag} -- ping with <@${id}>${special}`);
 		}
 
 		let system_header_example = normal_system_header({author_tag: "exampleuser", author_type: "human", author_id: "1234567890"}).trim();
