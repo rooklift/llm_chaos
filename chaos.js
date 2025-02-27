@@ -795,11 +795,13 @@ function main() {
 	let config = JSON.parse(fs.readFileSync(CONFIG_FILE));
 	let common = config.common;
 
-	check_bot_tokens(config.included);
+	let included = config.known.filter(o => !config.disabled.includes(o.ai_config.model));
+
+	check_bot_tokens(included);
 
 	let bot_promises = [];
 
-	for (let bot_cfg of config.included) {
+	for (let bot_cfg of included) {
 		bot_promises.push(new_bot(bot_cfg, common));
 	}
 
