@@ -141,6 +141,7 @@ const bot_prototype = {
 			"!break":     [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !abort."                                                 ],
 			"!chaos":     [(msg, ...args) =>             this.set_chaos(msg, ...args), "Set chaos value (chance of responding to non-pings)."              ],
 			"!config":    [(msg, ...args) =>           this.send_config(msg, ...args), "Display LLM config in this channel."                               ],
+			"!disconnect":[(msg, ...args) =>            this.disconnect(msg, ...args), "Just like it sounds."                                              ],
 			"!effort":    [(msg, ...args) =>  this.set_reasoning_effort(msg, ...args), "Set reasoning effort (low / medium / high). Leave blank to clear." ],
 			"!help":      [(msg, ...args) =>                       help(msg, ...args), "Display this message."                                             ],
 			"!history":   [(msg, ...args) =>          this.dump_history(msg, ...args), "Dump the internal history to the console."                         ],
@@ -201,6 +202,12 @@ const bot_prototype = {
 		this.set_system_prompt();
 		this.maybe_respond_spinner();
 		this.process_queue_spinner();
+	},
+
+	disconnect: function(msg) {
+		msg.channel.send("Goodbye.").finally(() => {
+			this.conn.destroy();
+		});
 	},
 
 	set_system_prompt: function() {
