@@ -383,7 +383,7 @@ const bot_prototype = {
 			this.msg_reply(msg, "Invalid argument");
 		} else {
 			this.chaos = n;
-			this.msg_reply(msg, `Chaos: ${n > 9000 ? "Over 9000!" : n}`);
+			this.msg_reply(msg, `Chaos: ${n}`);
 		}
 	},
 
