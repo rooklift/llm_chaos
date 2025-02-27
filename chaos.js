@@ -630,6 +630,7 @@ const bot_prototype = {
 			if (last) {
 				let reaction = last.reactions.cache.get(this.emoji);
 				if (reaction) {
+					// Note that this may sometimes fail because the cache wasn't updated fast enough. Meh.
 					reaction.remove().catch(error => console.error("Failed to clear reaction:", error));
 				}
 			}
