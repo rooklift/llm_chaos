@@ -205,10 +205,11 @@ const bot_prototype = {
 	},
 
 	disconnect: function(msg) {
+		this.channel = null;
+		this.abort();
 		msg.channel.send("Goodbye.").finally(() => {
 			this.conn.destroy();
 		});
-		this.channel = null;
 	},
 
 	set_system_prompt: function() {
