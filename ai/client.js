@@ -8,19 +8,22 @@ const utils = require("./utils");
 function new_client(cfg) {
 
 	let client = Object.create(client_prototype);
-	client.config = Object.assign({}, cfg);				// Making client.config a shallow copy of cfg.
+	let tmp_config = Object.assign({}, cfg);
 
 	for (let key of configs.Required) {
-		if (!Object.hasOwn(client.config, key)) {
+		if (!Object.hasOwn(tmp_config, key)) {
 			throw new Error(`Missing required config key: ${key}`);
 		}
 	}
 
 	for (let [key, value] of Object.entries(configs.Defaults)) {
-		if (!Object.hasOwn(client.config, key)) {
-			client.config[key] = value;
+		if (!Object.hasOwn(tmp_config, key)) {
+			tmp_config[key] = value;
 		}
 	}
+
+	// Lets make client.config a deep copy with this crude but effective method...
+	client.config = JSON.parse(JSON.stringify(tmp_config));
 
 	let api_key = "unset";								// Closure technique to keep api_key secret.
 	client.get_api_key = () => api_key;
@@ -208,6 +211,12 @@ const client_prototype = {
 	openrouter_request: function(formatted_conversation) {
 		let [headers, data] = this.openai_request(formatted_conversation);
 		data["include_reasoning"] = true;
+		if (Array.isArray(this.config.openrouter_order) && this.config.openrouter_order.length > 0) {
+			data["provider"] = {
+				"order": this.config.openrouter_order,
+				"allow_fallbacks": false,
+			}
+		}
 		return [headers, data];
 	},
 

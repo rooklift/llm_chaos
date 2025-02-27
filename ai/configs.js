@@ -30,8 +30,11 @@ exports.Defaults = {
 	budget_tokens: 0,				// Min 1024					(Anthropic API)
 	anthropic_version: "",			// Not sent if ""			(Irrelevant for non-Anthropic LLMs)
 
+	openrouter_order: [],
+
 	show_reasoning: false,
 	max_errors: 10,
 	min_delay: 1,
 	max_delay: 16,
 };
+
