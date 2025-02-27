@@ -208,6 +208,7 @@ const bot_prototype = {
 		msg.channel.send("Goodbye.").finally(() => {
 			this.conn.destroy();
 		});
+		this.channel = null;
 	},
 
 	set_system_prompt: function() {
@@ -634,7 +635,7 @@ const bot_prototype = {
 		}).finally(() => {
 			this.in_flight = false;
 			this.ai_abortcontroller = null;
-			if (last) {
+			if (last && this.channel) {
 				let reaction = last.reactions.cache.get(this.emoji);
 				if (reaction) {
 					// Note that this may sometimes fail because the cache wasn't updated fast enough. Meh.
