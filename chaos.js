@@ -596,7 +596,7 @@ const bot_prototype = {
 			}
 			if (this.channel) {
 				// Fire and forget, but catching Discord errors. This is not propagated in the main promise chain.
-				this.channel.send(error.toString()).catch(discord_error => {
+				this.channel.send(error.toString().slice(0, 1999)).catch(discord_error => {
 					console.log(discord_error);
 				});
 			}
