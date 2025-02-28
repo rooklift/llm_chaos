@@ -172,13 +172,13 @@ const bot_prototype = {
 				let st = ["```\nNormal commands - ping the LLM:\n"];
 				for (let [key, value] of Object.entries(commands)) {
 					if (!commands_that_can_be_sent_untargeted.includes(key) && !hidden_commands.includes(key)) {
-						st.push(`  ${key.padEnd(12)} ${value[1].toString()}`);
+						st.push(`  ${key.padEnd(14)} ${value[1].toString()}`);
 					}
 				}
 				st.push("\nChannel commands - can optionally send without ping, to affect every LLM:\n");
 				for (let [key, value] of Object.entries(commands)) {
 					if (commands_that_can_be_sent_untargeted.includes(key) && !hidden_commands.includes(key)) {
-						st.push(`  ${key.padEnd(12)} ${value[1].toString()}`);
+						st.push(`  ${key.padEnd(14)} ${value[1].toString()}`);
 					}
 				}
 				st.push("```");
