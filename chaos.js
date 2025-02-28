@@ -795,6 +795,25 @@ function check_bot_tokens(bot_configs) {
 
 // ------------------------------------------------------------------------------------------------
 
+const danger = `
+>  WARNING! This is a toy project and you use it at your own risk! Use of   <
+>  this software on servers with untrusted members is extremely unwise, as  <
+>  they absolutely will be able to run up excessive API costs. Remember     <
+>  longer histories -> more expenses!                                       <
+`
+
+function splash() {
+	console.log();
+	console.log(`            Script date: ${helpers.format_timestamp(fs.statSync(__filename).mtime)}`);
+	console.log(`     System prompt date: ${helpers.format_timestamp(fs.statSync(DEFAULT_SP_FILE).mtime)}`);
+	console.log(`   LLM chaos started at: ${helpers.format_timestamp(new Date())}`);
+	console.log();
+	console.log(danger.trim());
+	console.log();
+}
+
+// ------------------------------------------------------------------------------------------------
+
 function main() {
 
 	let config = JSON.parse(fs.readFileSync(CONFIG_FILE));
@@ -815,9 +834,7 @@ function main() {
 		for (let bot of bots) {
 			bot.start();			// Requires the bots array to be finalised first as the system prompt needs it.
 		}
-		console.log(`         Script date: ${helpers.format_timestamp(fs.statSync(__filename).mtime)}`);
-		console.log(`  System prompt date: ${helpers.format_timestamp(fs.statSync(DEFAULT_SP_FILE).mtime)}`);
-		console.log(`LLM chaos started at: ${helpers.format_timestamp(new Date())}`);
+		splash();
 	});
 }
 
