@@ -16,9 +16,16 @@
 
 exports.Required = ["model", "name", "company", "url"];
 
+// Lets just say that Defaults has every key, so we can check for wrong keys in configs...
+
 exports.Defaults = {
 
-	version: "",					// Like "name", this is mostly for system prompts, etc (not needed for comms).
+	model: "",						// Required
+	name: "",						// Required
+	company: "",					// Required
+	url: "",						// Required
+
+	full_name: "",					// This is mostly for system prompts. If unset, is auto-set to name.
 
 	max_tokens_key: "max_tokens",
 	sp_role: "system",

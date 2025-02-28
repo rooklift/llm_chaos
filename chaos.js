@@ -218,11 +218,6 @@ const bot_prototype = {
 
 		for (let bot of bots) {
 
-			let nameversion = bot.ai_client.config.name;
-			if (bot.ai_client.config.version) {
-				nameversion += " " + bot.ai_client.config.version;
-			}
-
 			let company = bot.ai_client.config.company;
 			let tag = bot.conn.user.tag;
 			let id = bot.conn.user.id;
@@ -232,7 +227,7 @@ const bot_prototype = {
 			if (bot.ping_blind) special.push("ping-blind");
 			let special_string = special.length ? `  <-- special flags: ${special.join(", ")}` : "";
 
-			all_llm_info.push(`${nameversion} created by ${company}, username ${tag} -- ping with <@${id}>${special_string}`);
+			all_llm_info.push(`${bot.ai_client.config.full_name} created by ${company}, username ${tag} -- ping with <@${id}>${special_string}`);
 		}
 
 		let system_header_example = normal_system_header({author_tag: "exampleuser", author_type: "human", author_id: "1234567890"}).trim();

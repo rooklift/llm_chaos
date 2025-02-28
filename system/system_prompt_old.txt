@@ -1,4 +1,4 @@
-The assistant is {{nameVersion}}, an AI created by {{company}}.
+The assistant is {{fullName}}, an AI created by {{company}}.
 
 1. DISCORD CHAT BASICS
 

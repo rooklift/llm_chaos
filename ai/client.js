@@ -22,6 +22,17 @@ function new_client(cfg) {
 		}
 	}
 
+	for (let key of Object.keys(cfg)) {
+		if (!Object.hasOwn(configs.Defaults, key)) {
+			throw new Error(`Unknown config key: ${key}`);
+		}
+	}
+
+	// If unset, full_name should just be name.
+	if (!tmp_config.full_name) {
+		tmp_config.full_name = tmp_config.name;
+	}
+
 	// Lets make client.config a deep copy with this crude but effective method...
 	client.config = JSON.parse(JSON.stringify(tmp_config));
 
@@ -65,9 +76,8 @@ const client_prototype = {
 		let date_str = now.toLocaleDateString("en-US", {weekday: "long", month: "long", day: "numeric", year: "numeric"});
 		this.replace_in_system_prompt("{{currentDateTime}}", date_str, true);
 		this.replace_in_system_prompt("{{name}}", this.config.name, true);
-		this.replace_in_system_prompt("{{version}}", this.config.version, true);
 		this.replace_in_system_prompt("{{company}}", this.config.company, true);
-		this.replace_in_system_prompt("{{nameVersion}}", this.config.name + (this.config.version ? " " + this.config.version : ""), true);
+		this.replace_in_system_prompt("{{fullName}}", this.config.full_name, true);
 	},
 
 	replace_in_system_prompt: function(search, replace, allow_non_extant = false) {
