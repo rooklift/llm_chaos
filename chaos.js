@@ -597,6 +597,7 @@ const bot_prototype = {
 		let conversation = this.format_history();
 
 		this.sent_chars += conversation.map(s => s.length).reduce((total, number) => total + number, 0);
+		this.sent_chars += this.ai_client.config.system_prompt.length;
 
 		this.in_flight = "Contacting LLM";
 		this.cancelled = false;
