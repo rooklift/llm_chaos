@@ -11,7 +11,7 @@ const fs = require("fs");
 
 process.chdir(__dirname);
 
-const CHAR_TOKEN_RATIO = 3.6		// For token estimates and cost estimates
+const CHAR_TOKEN_RATIO = 3.6;		// For token estimates and cost estimates
 
 const DEFAULT_SP_FILE = "./system/system_prompt.txt";
 const CONFIG_FILE = "./config.json";
@@ -838,7 +838,7 @@ const danger = `
 >  this software on servers with untrusted members is extremely unwise, as  <
 >  they absolutely will be able to run up excessive API costs. Remember     <
 >  longer histories -> more expenses!                                       <
-`
+`;
 
 function splash() {
 	console.log();

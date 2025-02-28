@@ -225,7 +225,7 @@ const client_prototype = {
 			data["provider"] = {
 				"order": this.config.openrouter_order,
 				"allow_fallbacks": false,
-			}
+			};
 		}
 		return [headers, data];
 	},
