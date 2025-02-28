@@ -142,11 +142,13 @@ const bot_prototype = {
 			});
 
 			let commands = {	// Note that the first arg received by all of these will be msg. Then any other args (which most don't use).
-			"!abort":     [(msg, ...args) =>                 this.abort(msg, ...args), "Abort current operation. Bump last_handled marker."                ],
-			"!blind":     [(msg, ...args) =>         this.set_blindness(msg, ...args), "Set / toggle being ping-blind." ],
-			"!break":     [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !abort."                                                 ],
+			"!abort":     [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !break."                                                 ],
+			"!blind":     [(msg, ...args) =>         this.set_blindness(msg, ...args), "Set / toggle being ping-blind."                                    ],
+			"!break":     [(msg, ...args) =>                 this.abort(msg, ...args), "Abort current operation. Bump last_handled marker."                ],
 			"!chaos":     [(msg, ...args) =>             this.set_chaos(msg, ...args), "Set chaos value (chance of responding to non-pings)."              ],
 			"!config":    [(msg, ...args) =>           this.send_config(msg, ...args), "Display LLM config in this channel."                               ],
+			"!cost":      [(msg, ...args) =>             this.send_cost(msg, ...args), "Display estimated costs in this channel."                          ],
+			"!costs":     [(msg, ...args) =>             this.send_cost(msg, ...args), "Alias for !cost."                                                  ],
 			"!disconnect":[(msg, ...args) =>            this.disconnect(msg, ...args), "Just like it sounds."                                              ],
 			"!effort":    [(msg, ...args) =>  this.set_reasoning_effort(msg, ...args), "Set reasoning effort (low / medium / high). Leave blank to clear." ],
 			"!help":      [(msg, ...args) =>                       help(msg, ...args), "Display this message."                                             ],
@@ -164,17 +166,18 @@ const bot_prototype = {
 			};
 
 			let commands_that_can_be_sent_untargeted = ["!abort", "!break", "!reset"];		// Note that these aren't allowed to have arguments.
+			let hidden_commands = ["!abort", "!costs"];										// Won't show up in help.
 
 			let help = (msg) => {
 				let st = ["```\nNormal commands - ping the LLM:\n"];
 				for (let [key, value] of Object.entries(commands)) {
-					if (!commands_that_can_be_sent_untargeted.includes(key)) {
+					if (!commands_that_can_be_sent_untargeted.includes(key) && !hidden_commands.includes(key)) {
 						st.push(`  ${key.padEnd(12)} ${value[1].toString()}`);
 					}
 				}
 				st.push("\nChannel commands - can optionally send without ping, to affect every LLM:\n");
 				for (let [key, value] of Object.entries(commands)) {
-					if (commands_that_can_be_sent_untargeted.includes(key)) {
+					if (commands_that_can_be_sent_untargeted.includes(key) && !hidden_commands.includes(key)) {
 						st.push(`  ${key.padEnd(12)} ${value[1].toString()}`);
 					}
 				}
@@ -455,8 +458,6 @@ const bot_prototype = {
 	send_status: function(msg) {
 		let hs = this.history_size();
 		let spl = this.ai_client.config.system_prompt.length;
-		let itok = this.sent_chars / CHAR_TOKEN_RATIO;
-		let otok = this.received_chars / CHAR_TOKEN_RATIO;
 		let s = "```\n" +
 		`User ID:         <@${this.conn.user.id}>\n` +
 		`Channel:         ${this.channel?.id === msg.channel.id ? msg.channel.name : (this.channel ? "other" : this.channel)}\n` +
@@ -467,6 +468,14 @@ const bot_prototype = {
 		`Queue length:    ${this.queue.length}\n` +
 		`History length:  ${this.history.length} (max ${this.history_limit}) --> concats to ${this.count_concatenated_history()}\n` +
 		`History size:    ${(hs / CHAR_TOKEN_RATIO).toFixed(0)} tokens + ${(spl / CHAR_TOKEN_RATIO).toFixed(0)} S.P. tokens\n` +
+		"```";
+		this.msg_reply(msg, s);
+	},
+
+	send_cost: function(msg) {
+		let itok = this.sent_chars / CHAR_TOKEN_RATIO;
+		let otok = this.received_chars / CHAR_TOKEN_RATIO;
+		let s = "```\n" +
 		`I/O:             ${itok.toFixed(0)} tokens (input) + ${otok.toFixed(0)} tokens (output)\n` +
 		`Cost:            ${this.estimated_cost()}\n` +
 		"```";
@@ -474,6 +483,9 @@ const bot_prototype = {
 	},
 
 	estimated_cost: function() {
+		if (!this.input_price || !this.output_price) {
+			return "Prices unknown!";
+		}
 		let input_tokens = this.sent_chars / CHAR_TOKEN_RATIO;
 		let output_tokens = this.received_chars / CHAR_TOKEN_RATIO;
 		let i_cost = input_tokens * this.input_price / 1000000;
