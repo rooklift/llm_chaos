@@ -11,6 +11,8 @@ const fs = require("fs");
 
 process.chdir(__dirname);
 
+const CHAR_TOKEN_RATIO = 3.6		// For token estimates and cost estimates
+
 const DEFAULT_SP_FILE = "./system/system_prompt.txt";
 const CONFIG_FILE = "./config.json";
 
@@ -120,6 +122,8 @@ const bot_prototype = {
 				cancelled: false,								// Assume this can be true even if nothing in-flight!
 				last_msg: null,									// Last message received. Purely for emoji reactions.
 				last_handled: BigInt(-1),						// Snowflake (as BigInt) of the last thing we responsed to. Can be artificially set with !break
+				sent_chars: 0,									// Needs to be converted to token count to be useful.
+				received_chars: 0,								// Likewise.
 			});
 
 			this.ai_client = ai.new_client(ai_config);
@@ -449,6 +453,8 @@ const bot_prototype = {
 	send_status: function(msg) {
 		let hs = this.history_size();
 		let spl = this.ai_client.config.system_prompt.length;
+		let itok = this.sent_chars / CHAR_TOKEN_RATIO;
+		let otok = this.received_chars / CHAR_TOKEN_RATIO;
 		let s = "```\n" +
 		`User ID:         <@${this.conn.user.id}>\n` +
 		`Channel:         ${this.channel?.id === msg.channel.id ? msg.channel.name : (this.channel ? "other" : this.channel)}\n` +
@@ -456,8 +462,9 @@ const bot_prototype = {
 		`Poll delay:      ${this.poll_wait}\n` +
 		`Queue length:    ${this.queue.length}\n` +
 		`History length:  ${this.history.length} (max ${this.history_limit}) --> concats to ${this.count_concatenated_history()}\n` +
-		`History size:    ${hs} chars (approx ${Math.floor(hs / 3.6)} tokens)\n` +
-		`System prompt:   ${spl} chars (approx ${Math.floor(spl / 3.6)} tokens)\n` +
+		`History size:    ${hs} chars (approx ${(hs / CHAR_TOKEN_RATIO).toFixed(0)} tokens)\n` +
+		`System prompt:   ${spl} chars (approx ${(spl / CHAR_TOKEN_RATIO).toFixed(0)} tokens)\n` +
+		`I/O:             Input tokens: ${itok.toFixed(0)} (approx), output tokens: ${otok.toFixed(0)} (approx)\n` +
 		`Ping-blind:      ${this.ping_blind}\n` +
 		`Chaos:           ${this.chaos.toFixed(2)}\n` +
 		"```";
@@ -589,6 +596,8 @@ const bot_prototype = {
 
 		let conversation = this.format_history();
 
+		this.sent_chars += conversation.map(s => s.length).reduce((total, number) => total + number, 0);
+
 		this.in_flight = "Contacting LLM";
 		this.cancelled = false;
 		this.ai_abortcontroller = new AbortController();
@@ -610,6 +619,7 @@ const bot_prototype = {
 			if (!response || !this.channel || this.cancelled) {
 				return;
 			}
+			this.received_chars += response.length;
 			response = helpers.normalize_linebreaks(response);			// Llama Base confused me once with \r
 			this.add_own_response_to_history(response);
 			let [text, attachments] = create_text_and_attachments(response);
