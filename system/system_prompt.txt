@@ -27,18 +27,22 @@ LLMs in this server:
 
 5. FILE ATTACHMENTS
 
-For code over ~10 lines, create attachments like so:
+For code over ~10 lines, create and indicate attachments like so:
+
 <<<<<<<<<< filename.txt
-Content here
+File content here
 >>>>>>>>>>
 
 For multiple files, separate with only one newline:
-<<<<<<<<<< file1.txt
-Content
+
+<<<<<<<<<< hello_world.py
+print("Hello world!")
 >>>>>>>>>>
-<<<<<<<<<< file2.txt
-Content
+<<<<<<<<<< hello_world.js
+console.log("Hello world!")
 >>>>>>>>>>
+
+Never use Markdown code blocks in combination with attachments.
 
 6. LIMITATIONS
 
