@@ -124,6 +124,8 @@ const bot_prototype = {
 				last_handled: BigInt(-1),						// Snowflake (as BigInt) of the last thing we responsed to. Can be artificially set with !break
 				sent_chars: 0,									// Needs to be converted to token count to be useful.
 				received_chars: 0,								// Likewise.
+				input_price: cfg.input_price || 0,				// Expressed as dollars per million tokens.
+				output_price: cfg.output_price || 0,			// Note that there are issues with not counting reasoning tokens.
 			});
 
 			this.ai_client = ai.new_client(ai_config);
@@ -458,17 +460,30 @@ const bot_prototype = {
 		let s = "```\n" +
 		`User ID:         <@${this.conn.user.id}>\n` +
 		`Channel:         ${this.channel?.id === msg.channel.id ? msg.channel.name : (this.channel ? "other" : this.channel)}\n` +
+		`Ping-blind:      ${this.ping_blind}\n` +
+		`Chaos:           ${this.chaos.toFixed(2)}\n` +
 		`In flight:       ${this.in_flight}\n` +
 		`Poll delay:      ${this.poll_wait}\n` +
 		`Queue length:    ${this.queue.length}\n` +
 		`History length:  ${this.history.length} (max ${this.history_limit}) --> concats to ${this.count_concatenated_history()}\n` +
-		`History size:    ${hs} chars (approx ${(hs / CHAR_TOKEN_RATIO).toFixed(0)} tokens)\n` +
-		`System prompt:   ${spl} chars (approx ${(spl / CHAR_TOKEN_RATIO).toFixed(0)} tokens)\n` +
-		`I/O:             Input tokens: ${itok.toFixed(0)} (approx), output tokens: ${otok.toFixed(0)} (approx)\n` +
-		`Ping-blind:      ${this.ping_blind}\n` +
-		`Chaos:           ${this.chaos.toFixed(2)}\n` +
+		`History size:    ${(hs / CHAR_TOKEN_RATIO).toFixed(0)} tokens + ${(spl / CHAR_TOKEN_RATIO).toFixed(0)} S.P. tokens\n` +
+		`I/O:             ${itok.toFixed(0)} tokens (input) + ${otok.toFixed(0)} tokens (output)\n` +
+		`Cost:            ${this.estimated_cost()}\n` +
 		"```";
 		this.msg_reply(msg, s);
+	},
+
+	estimated_cost: function() {
+		let input_tokens = this.sent_chars / CHAR_TOKEN_RATIO;
+		let output_tokens = this.received_chars / CHAR_TOKEN_RATIO;
+		let i_cost = input_tokens * this.input_price / 1000000;
+		let o_cost = output_tokens * this.output_price / 1000000;
+		let s = (i_cost + o_cost).toFixed(4);
+		let dot_index = s.indexOf(".");
+		while (s.endsWith("0") && s.length - dot_index > 3) {
+			s = s.slice(0, -1);
+		}
+		return `$${s} (estimated; warning: ignores hidden reasoning!)`;
 	},
 
 	msg_is_mine: function(msg) {
