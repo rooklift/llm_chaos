@@ -458,6 +458,7 @@ const bot_prototype = {
 		`History length:  ${this.history.length} (max ${this.history_limit}) --> concats to ${this.count_concatenated_history()}\n` +
 		`History size:    ${hs} chars (approx ${Math.floor(hs / 3.6)} tokens)\n` +
 		`System prompt:   ${spl} chars (approx ${Math.floor(spl / 3.6)} tokens)\n` +
+		`Ping-blind:      ${this.ping_blind}\n` +
 		`Chaos:           ${this.chaos.toFixed(2)}\n` +
 		"```";
 		this.msg_reply(msg, s);
