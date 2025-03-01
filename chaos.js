@@ -651,7 +651,7 @@ const bot_prototype = {
 					think_chunks[i] = "```\n" + think_chunks[i] + "\n```";
 				}
 				think_chunks[0] = "💭\n" + think_chunks[0];							// Only at the start of the first think chunk.
-				think_chunks[think_chunks.length - 1] += "\n💡";						// Only at the end of the last think chunk.
+				think_chunks[think_chunks.length - 1] += "\n▶️";						// Only at the end of the last think chunk.
 				chunks.push(...think_chunks);
 			}
 
