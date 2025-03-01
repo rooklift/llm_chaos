@@ -641,11 +641,10 @@ const bot_prototype = {
 			this.received_chars += response.length;
 			response = helpers.normalize_linebreaks(response);						// Llama Base confused me once with \r
 			this.add_own_response_to_history(response);
-
 			let chunks = [];					// Each chunk ends up being its very own Discord message.
-
 			let think = this.ai_client.get_last_think();
 			if (think) {
+				this.received_chars += think.length;
 				let think_chunks = helpers.split_text_into_chunks(think, 1970);		// Some margin of characters to add stuff.
 				for (let i = 0; i < think_chunks.length; i++) {
 					think_chunks[i] = "```\n" + think_chunks[i] + "\n```";
@@ -654,10 +653,8 @@ const bot_prototype = {
 				think_chunks[think_chunks.length - 1] += "\n⇨";						// Only at the end of the last think chunk.
 				chunks.push(...think_chunks);
 			}
-
 			let [text, attachments] = create_text_and_attachments(response);
 			chunks.push(...helpers.split_text_into_chunks(text, 1999));
-
 			let send_promise_chain = Promise.resolve();
 			for (let i = 0; i < chunks.length - 1; i++) {	// i < chunks.length - 1 is correct, the last chunk is handled below.
 				let chunk = chunks[i];
