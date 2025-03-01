@@ -647,9 +647,8 @@ const bot_prototype = {
 				this.received_chars += think.length;
 				let think_chunks = helpers.split_text_into_chunks(think, 1970);		// Some margin of characters to add stuff.
 				for (let i = 0; i < think_chunks.length; i++) {
-					think_chunks[i] = "```\n" + think_chunks[i] + "\n```";
+					think_chunks[i] = "💭\n```\n" + think_chunks[i] + "\n```";		// 💭 at start of every chunk so other bots ignore it.
 				}
-				think_chunks[0] = "💭\n" + think_chunks[0];							// Only at the start of the first think chunk.
 				think_chunks[think_chunks.length - 1] += "\n⇨";						// Only at the end of the last think chunk.
 				chunks.push(...think_chunks);
 			}
