@@ -294,6 +294,21 @@ const client_prototype = {
 		return parser(data);
 	},
 
+	get_last_think: function() {
+		try {
+			let o = JSON.parse(this.last_receive);
+			if (this.is_anthropic()) {
+				if (!Array.isArray(o?.content)) return "";
+				let thinking_item = o.content.find(item => item?.type === "thinking");
+				return thinking_item?.thinking || "";
+			} else if (this.is_openrouter()) {
+				return o?.choices?.[0]?.message?.reasoning || "";
+			}
+		} catch (error) {
+			return "";
+		}
+	},
+
 	send_conversation: function(conversation, raw = false, abortcontroller = null) {
 		if (this.errors > this.config.max_errors) {
 			return Promise.reject(new TooManyErrors());
