@@ -199,30 +199,3 @@ exports.date_from_snowflake = function(snowflake) {		// Unused but good to have.
 	let unixtime = BigInt(1420070400000) + (snowflake >> BigInt(22));
 	return new Date(Number(unixtime));
 };
-
-exports.emblocken_thinks = function(s) {	// Maybe don't use this as it slightly trains other AIs (which see the output) to use Markdown blocks.
-
-	if (!s.startsWith("<think>")) {
-		return s;
-	}
-
-	let open_count = (s.match(/<think>/g) || []).length;
-	let close_count = (s.match(/<\/think>/g) || []).length;
-	if (open_count !== 1 || close_count !== 1) {
-		return s
-	}
-
-	if (s.indexOf("</think>") > 1980) {		// Something like 1985 is the actual limit.
-		return s;
-	}
-
-	s = s.replace("<think>", "```\n<think>")
-	s = s.replace("</think>", "</think>\n```")
-
-	// There's likely a double newline between the thinking and the content, but once
-	// wrapped in a code block this will be excessive, so make it a single newline:
-
-	s = s.replace("</think>\n```\n\n", "</think>\n```\n")
-
-	return s;
-};

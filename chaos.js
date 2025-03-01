@@ -159,7 +159,6 @@ const bot_prototype = {
 			"!poll":      [(msg, ...args) =>         this.set_poll_wait(msg, ...args), "Set the polling delay in milliseconds."                            ],
 			"!reload":    [(msg, ...args) =>     this.set_system_prompt(msg, ...args), "Reload the system prompt from disk."                               ],
 			"!reset":     [(msg, ...args) =>                 this.reset(msg, ...args), "Clear the history. Make the LLM use this channel."                 ],
-			"!show":      [(msg, ...args) =>    this.set_show_reasoning(msg, ...args), "Set / toggle showing reasoning (if available) inline in the text." ],
 			"!status":    [(msg, ...args) =>           this.send_status(msg, ...args), "Display essential bot status info in this channel."                ],
 			"!system":    [(msg, ...args) =>    this.dump_system_prompt(msg, ...args), "Dump the system prompt to the console."                            ],
 			"!tokens":    [(msg, ...args) =>        this.set_max_tokens(msg, ...args), "Set max_tokens for the LLM."                                       ],
@@ -186,7 +185,10 @@ const bot_prototype = {
 			};
 
 			this.conn.on("messageCreate", (msg) => {
-				if (this.msg_is_mine(msg)) {
+				if (this.msg_is_mine(msg)) {				// Totally ignore my own messages.
+					return;
+				}
+				if (msg.content.startsWith("💭")) {			// Totally ignore anyone's thinking.
 					return;
 				}
 				let {cmd, args} = this.cmd_from_msg(msg, commands_that_can_be_sent_untargeted);
@@ -348,17 +350,6 @@ const bot_prototype = {
 			this.ping_blind = !this.ping_blind;
 		}
 		this.msg_reply(msg, `Ping blind: ${this.ping_blind}`);
-	},
-
-	set_show_reasoning: function(msg, val) {
-		if (val && ["FALSE", "OFF"].includes(val.toUpperCase())) {
-			this.ai_client.set_show_reasoning(false);
-		} else if (val && ["TRUE", "ON"].includes(val.toUpperCase())) {
-			this.ai_client.set_show_reasoning(true);
-		} else {
-			this.ai_client.set_show_reasoning(!this.ai_client.config.show_reasoning);
-		}
-		this.msg_reply(msg, `Show reasoning: ${this.ai_client.config.show_reasoning}`);
 	},
 
 	set_reasoning_effort: function(msg, val) {				// But I want to use this for Anthropic too...
@@ -648,11 +639,25 @@ const bot_prototype = {
 				return;
 			}
 			this.received_chars += response.length;
-			response = helpers.normalize_linebreaks(response);			// Llama Base confused me once with \r
+			response = helpers.normalize_linebreaks(response);						// Llama Base confused me once with \r
 			this.add_own_response_to_history(response);
+
+			let chunks = [];					// Each chunk ends up being its very own Discord message.
+
+			let think = this.ai_client.get_last_think();
+			if (think) {
+				let think_chunks = helpers.split_text_into_chunks(think, 1970);		// Some margin of characters to add stuff.
+				for (let i = 0; i < think_chunks.length; i++) {
+					think_chunks[i] = "```\n" + think_chunks[i] + "\n```";
+				}
+				think_chunks[0] = "💭\n" + think_chunks[0];							// Only at the start of the first think chunk.
+				think_chunks[think_chunks.length - 1] += "\n💡";						// Only at the end of the last think chunk.
+				chunks.push(...think_chunks);
+			}
+
 			let [text, attachments] = create_text_and_attachments(response);
-			// text = helpers.emblocken_thinks(text);
-			let chunks = helpers.split_text_into_chunks(text, 1999);
+			chunks.push(...helpers.split_text_into_chunks(text, 1999));
+
 			let send_promise_chain = Promise.resolve();
 			for (let i = 0; i < chunks.length - 1; i++) {	// i < chunks.length - 1 is correct, the last chunk is handled below.
 				let chunk = chunks[i];
