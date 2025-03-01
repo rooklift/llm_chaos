@@ -86,7 +86,7 @@ function create_text_and_attachments(text) {				// Regex by GPT-4o
 
 	let built_arr = files.map(a => new discord.AttachmentBuilder(Buffer.from(a.content), {name: a.filename}));
 
-	return [text, built_arr];
+	return [text.trim(), built_arr];
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -651,6 +651,7 @@ const bot_prototype = {
 			response = helpers.normalize_linebreaks(response);			// Llama Base confused me once with \r
 			this.add_own_response_to_history(response);
 			let [text, attachments] = create_text_and_attachments(response);
+			// text = helpers.emblocken_thinks(text);
 			let chunks = helpers.split_text_into_chunks(text, 1999);
 			let send_promise_chain = Promise.resolve();
 			for (let i = 0; i < chunks.length - 1; i++) {	// i < chunks.length - 1 is correct, the last chunk is handled below.
