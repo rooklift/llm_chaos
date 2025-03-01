@@ -11,12 +11,12 @@ const fs = require("fs");
 
 process.chdir(__dirname);
 
-const CHAR_TOKEN_RATIO = 3.6;		// For token estimates and cost estimates
+const CHAR_TOKEN_RATIO = 3.6;				// For token estimates and cost estimates
 
 const DEFAULT_SP_FILE = "./system/system_prompt.txt";
 const CONFIG_FILE = "./config.json";
 
-const STEGANOGRAPHY_PREFIXES = ["💭", "🧩"];
+const STEGANOGRAPHY_PREFIXES = ["💭"];		// Any message starting with one of these is ignored.
 
 let bots = [];
 
