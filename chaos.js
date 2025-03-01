@@ -486,7 +486,7 @@ const bot_prototype = {
 		while (s.endsWith("0") && s.length - dot_index > 3) {
 			s = s.slice(0, -1);
 		}
-		return `$${s} (estimated; warning: ignores hidden reasoning!)`;
+		return `$${s} (estimated; WARNING: ignores reasoning if hidden (e.g. OpenAI)`;
 	},
 
 	msg_is_mine: function(msg) {
