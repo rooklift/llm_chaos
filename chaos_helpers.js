@@ -212,8 +212,7 @@ exports.emblocken_thinks = function(s) {	// Maybe don't use this as it slightly 
 		return s
 	}
 
-	let i = s.indexOf("</think>");
-	if (i > 1980) {						// Something like 1985 is the actual limit.
+	if (s.indexOf("</think>") > 1980) {		// Something like 1985 is the actual limit.
 		return s;
 	}
 
