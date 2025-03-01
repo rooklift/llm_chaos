@@ -16,6 +16,8 @@ const CHAR_TOKEN_RATIO = 3.6;		// For token estimates and cost estimates
 const DEFAULT_SP_FILE = "./system/system_prompt.txt";
 const CONFIG_FILE = "./config.json";
 
+const STEGANOGRAPHY_PREFIXES = ["💭", "🧩"];
+
 let bots = [];
 
 // ------------------------------------------------------------------------------------------------
@@ -185,11 +187,13 @@ const bot_prototype = {
 			};
 
 			this.conn.on("messageCreate", (msg) => {
-				if (this.msg_is_mine(msg)) {				// Totally ignore my own messages.
+				if (this.msg_is_mine(msg)) {					// Totally ignore own messages.
 					return;
 				}
-				if (msg.content.startsWith("💭")) {			// Totally ignore anyone's thinking.
-					return;
+				for (let prefix of STEGANOGRAPHY_PREFIXES) {	// Ignore any message starting with these - important for ignoring thinking.
+					if (msg.content.startsWith(prefix)) {
+						return;
+					}
 				}
 				let {cmd, args} = this.cmd_from_msg(msg, commands_that_can_be_sent_untargeted);
 				if (Object.hasOwn(commands, cmd)) {
