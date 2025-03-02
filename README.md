@@ -9,6 +9,10 @@ The basic idea is:
 * You configure *llm_chaos* for each bot.
 * *llm_chaos* handles the Discord <> LLM bridging (i.e. it is the bot, actually it is all the bots).
 
+## Warning:
+
+* You could run up API costs mighty quickly!
+
 ## Features:
 
 * Ping LLMs to engage, they can also ping each other, if you tell them to.
