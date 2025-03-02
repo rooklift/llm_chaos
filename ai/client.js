@@ -107,10 +107,6 @@ const client_prototype = {
 		}
 	},
 
-	set_show_reasoning: function(foo) {
-		this.config.show_reasoning = Boolean(foo);
-	},
-
 	set_budget_tokens: function(n) {
 		this.config.budget_tokens = n;
 	},
@@ -261,13 +257,13 @@ const client_prototype = {
 		if (this.is_openrouter()) return {
 			formatter: utils.format_message_array_openai,
 			maker:     this.openrouter_request.bind(this),
-			parser:    (data) => utils.parse_200_response_openrouter(data, this.config.show_reasoning)
+			parser:    utils.parse_200_response_openai
 		};
 
 		if (this.is_anthropic()) return {
 			formatter: utils.format_message_array_openai,
 			maker:     this.anthropic_request.bind(this),
-			parser:    (data) => utils.parse_200_response_anthropic(data, this.config.show_reasoning)
+			parser:    utils.parse_200_response_anthropic
 		};
 
 		if (this.is_google()) return {

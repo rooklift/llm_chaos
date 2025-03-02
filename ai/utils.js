@@ -16,19 +16,6 @@ exports.parse_200_response_openai = function(data) {
 	return content;
 };
 
-exports.parse_200_response_openrouter = function(data, show_reasoning = false) {
-	let content = data?.choices?.[0]?.message?.content;
-	if (typeof content !== "string") {
-		throw new RequestError(200, JSON.stringify(data));
-	}
-	let reasoning = data?.choices?.[0]?.message?.reasoning;
-	if (show_reasoning && typeof reasoning === "string" && reasoning.length > 0) {
-		return "<think>\n" + reasoning.trim() + "\n</think>\n\n" + content;
-	} else {
-		return content;
-	}
-};
-
 exports.parse_200_response_google = function(data) {
 	let parts = data?.candidates?.[0]?.content?.parts;
 	if (!Array.isArray(parts) || parts.length === 0) {
@@ -40,27 +27,21 @@ exports.parse_200_response_google = function(data) {
 	return ret_strings.join("\n\n");
 };
 
-exports.parse_200_response_anthropic = function(data, show_reasoning = false) {
+exports.parse_200_response_anthropic = function(data) {
 	if (!Array.isArray(data.content) || data.content.length === 0) {
 		throw new RequestError(200, JSON.stringify(data));
 	}
 	let ret_strings = [];
-	let thinking = null;
 	for (let part of data.content) {
 		if (typeof part !== "object" || part === null || !Object.hasOwn(part, "type")) {
 			ret_strings.push(`[response content included unreadable part]`);
-		} else if (part.type === "thinking" && typeof part.thinking === "string") {
-			thinking = part.thinking;
-		} else if (part.type === "redacted_thinking") {
+		} else if (part.type === "thinking" || part.type === "redacted_thinking") {
 			continue;
 		} else if (part.type === "text" && typeof part.text === "string") {
 			ret_strings.push(part.text);
 		} else {
 			ret_strings.push(`[response content included unreadable "${part.type}" part]`);
 		}
-	}
-	if (thinking && show_reasoning) {
-		ret_strings.unshift("<think>\n" + thinking.trim() + "\n</think>");
 	}
 	return ret_strings.join("\n\n");
 };
