@@ -706,7 +706,7 @@ const bot_prototype = {
 		// array is from me, concatenating messages as required to maintain this goal.
 
 		const SYSTEM_START = "[[ New messages received! ]]";
-		const SYSTEM_END = "[[ You can reply! Please do not add system headers. ]]";
+		const SYSTEM_END = "[[ You can reply! Do not write the square-bracketed metadata. ]]";
 
 		let ret = [];
 		let current_block = [];
