@@ -48,7 +48,7 @@ function new_client(cfg) {
 
 	client.standard_system_prompt_replacements();
 
-	client.last_send = "null";							// For debugging only. Stored as JSON.
+	client.last_send = "null";							// Stored as JSON (string).
 	client.last_receive = "null";						// Likewise.
 
 	return client;

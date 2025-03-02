@@ -113,6 +113,7 @@ const bot_prototype = {
 				owner: common.owner,							// Name of the human in charge...
 				sp_location: cfg.system_prompt || DEFAULT_SP_FILE,	// Location of the system prompt, for (re)loading.
 				ping_blind: cfg.ping_blind || false,			// Whether this LLM's ping recognition is suppressed.
+				show_reasoning: cfg.show_reasoning || true,		// Whether thinking blocks are shown (if available).
 				history_limit: cfg.history_limit || common.history_limit,	// Max history length.
 				poll_wait: cfg.poll_wait || common.poll_wait,	// Delay for maybe_respond_spinner().
 				poll_id: null,									// setTimeout id, for cancellation.
@@ -161,6 +162,7 @@ const bot_prototype = {
 			"!poll":      [(msg, ...args) =>         this.set_poll_wait(msg, ...args), "Set the polling delay in milliseconds."                            ],
 			"!reload":    [(msg, ...args) =>     this.set_system_prompt(msg, ...args), "Reload the system prompt from disk."                               ],
 			"!reset":     [(msg, ...args) =>                 this.reset(msg, ...args), "Clear the history. Make the LLM use this channel."                 ],
+			"!show":      [(msg, ...args) =>    this.set_show_reasoning(msg, ...args), "Set / toggle showing reasoning (if available) in the channel."     ],
 			"!status":    [(msg, ...args) =>           this.send_status(msg, ...args), "Display essential bot status info in this channel."                ],
 			"!system":    [(msg, ...args) =>    this.dump_system_prompt(msg, ...args), "Dump the system prompt to the console."                            ],
 			"!tokens":    [(msg, ...args) =>        this.set_max_tokens(msg, ...args), "Set max_tokens for the LLM."                                       ],
@@ -354,6 +356,17 @@ const bot_prototype = {
 			this.ping_blind = !this.ping_blind;
 		}
 		this.msg_reply(msg, `Ping blind: ${this.ping_blind}`);
+	},
+
+	set_show_reasoning: function(msg, val) {
+		if (val && ["FALSE", "OFF"].includes(val.toUpperCase())) {
+			this.show_reasoning = false;
+		} else if (val && ["TRUE", "ON"].includes(val.toUpperCase())) {
+			this.show_reasoning = true;
+		} else {
+			this.show_reasoning = !this.show_reasoning;
+		}
+		this.msg_reply(msg, `Show reasoning: ${this.show_reasoning}`);
 	},
 
 	set_reasoning_effort: function(msg, val) {				// But I want to use this for Anthropic too...
@@ -647,18 +660,20 @@ const bot_prototype = {
 				return null;
 			}
 			this.received_chars += response.length;
-			response = helpers.normalize_linebreaks(response);						// Llama Base confused me once with \r
+			response = helpers.normalize_linebreaks(response);							// Llama Base confused me once with \r
 			this.add_own_response_to_history(response);
-			let chunks = [];					// Each chunk ends up being its very own Discord message.
+			let chunks = [];									// Each chunk ends up being its very own Discord message.
 			let think = this.ai_client.get_last_think();
 			if (think) {
 				this.received_chars += think.length;
-				let think_chunks = helpers.split_text_into_chunks(think, 1970);		// Some margin of characters to add stuff.
-				for (let i = 0; i < think_chunks.length; i++) {
-					think_chunks[i] = "💭\n```\n" + think_chunks[i] + "\n```";		// 💭 at start of every chunk so other bots ignore it.
+				if (this.show_reasoning) {
+					let think_chunks = helpers.split_text_into_chunks(think, 1970);		// Some margin of characters to add stuff.
+					for (let i = 0; i < think_chunks.length; i++) {
+						think_chunks[i] = "💭\n```\n" + think_chunks[i] + "\n```";		// 💭 at start of every chunk so other bots ignore it.
+					}
+					think_chunks[think_chunks.length - 1] += "\n⇨";						// Only at the end of the last think chunk.
+					chunks.push(...think_chunks);
 				}
-				think_chunks[think_chunks.length - 1] += "\n⇨";						// Only at the end of the last think chunk.
-				chunks.push(...think_chunks);
 			}
 			let [text, attachments] = create_text_and_attachments(response);
 			chunks.push(...helpers.split_text_into_chunks(text, 1999));
