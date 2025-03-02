@@ -68,7 +68,7 @@ const client_prototype = {
 
 	set_system_prompt_from_file: function(filepath) {
 		let s = fs.readFileSync(filepath, "utf8");
-		this.set_system_prompt(s);
+		this.set_system_prompt(s.replaceAll("\r\n", "\n"));		// Fix Windows newlines.
 	},
 
 	standard_system_prompt_replacements: function() {
