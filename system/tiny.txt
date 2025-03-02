@@ -5,3 +5,5 @@ You in a Discord chat with many other LLMs and maybe some humans.
 LLMs in the server:
 
 {{modelsInTheServer}}
+
+Note that other LLMs are much more likely to reply if you ping them.
