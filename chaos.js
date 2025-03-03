@@ -57,11 +57,11 @@ const history_object_prototype = {
 };
 
 function normal_system_header(o) {
-	return `=== Message from ${o.author_tag} (${o.author_type}, userid ${o.author_id}) ===\n`;
+	return `=== Message from ${o.author_tag} (${o.author_type}, userid ${o.author_id}): ===\n`;
 }
 
 function attachment_system_header(o) {
-	return `=== File attached by ${o.author_tag} (${o.author_type}, userid ${o.author_id}) ===\n`;
+	return `=== File attached by ${o.author_tag} (${o.author_type}, userid ${o.author_id}): ===\n`;
 }
 
 // ------------------------------------------------------------------------------------------------
