@@ -628,7 +628,8 @@ const bot_prototype = {
 		let conversation = this.format_history();
 
 		let sent_chars_estimate = conversation.reduce((total, s) => total + s.length, 0) + this.ai_client.config.system_prompt.length;
-		this.sent_tokens += Math.floor(sent_chars_estimate / CHAR_TOKEN_RATIO);			// We *could* try to get the value from the response later instead...?
+		let sent_tokens_estimate = Math.floor(sent_chars_estimate / CHAR_TOKEN_RATIO);
+		this.sent_tokens += sent_tokens_estimate;			// But we might undo this if we can get the real value later.
 
 		this.in_flight = "Contacting LLM";
 		this.cancelled = false;
@@ -637,6 +638,7 @@ const bot_prototype = {
 		// Promise.resolve("I would have sent something.").catch(error => {				// Use this for testing.
 
 		this.ai_client.send_conversation(conversation, false, this.ai_abortcontroller).catch(error => {
+
 			if (error.name !== "AbortError") {
 				this.log(error);
 			}
@@ -646,7 +648,9 @@ const bot_prototype = {
 				});
 			}
 			return null;
+
 		}).then(response => {
+
 			if (!response || !this.channel || this.cancelled) {
 				if (response === "" && this.channel) {
 					this.channel.send("(Empty response generated)").catch(discord_error => {	// Not part of main promise chain.
@@ -655,9 +659,14 @@ const bot_prototype = {
 				}
 				return null;
 			}
+
 			response = helpers.normalize_linebreaks(response);							// Llama Base confused me once with \r
 			this.add_own_response_to_history(response);
+
 			let chunks = [];															// Each chunk ends up being its very own Discord message.
+
+			// Add any thinking to the chunks first...
+
 			let think = this.ai_client.get_last_think();								// think will be "" if not available.
 			if (think) {
 				if (this.show_reasoning) {
@@ -669,14 +678,28 @@ const bot_prototype = {
 					chunks.push(...think_chunks);
 				}
 			}
+
+			// Add the main text to the chunks...
+
 			let [text, attachments] = create_text_and_attachments(response);
 			chunks.push(...helpers.split_text_into_chunks(text, 1999));
+
+			// Bookkeeping for costs - get real token counts from the client...
+
+			let accurate_sent_tokens = this.ai_client.get_last_input_token_count();
+			if (accurate_sent_tokens) {
+				this.sent_tokens -= sent_tokens_estimate;								// Undo what we estimated earlier.
+				this.sent_tokens += accurate_sent_tokens;
+			}
 			let accurate_received_tokens = this.ai_client.get_last_output_token_count();
 			if (accurate_received_tokens) {
 				this.received_tokens += accurate_received_tokens;
 			} else {
 				this.received_tokens += Math.floor((think.length + response.length) / CHAR_TOKEN_RATIO);
 			}
+
+			// Now, send all the chunks off...
+
 			let send_promise_chain = Promise.resolve();
 			for (let i = 0; i < chunks.length - 1; i++) {	// i < chunks.length - 1 is correct, the last chunk is handled below.
 				let chunk = chunks[i];
@@ -690,9 +713,13 @@ const bot_prototype = {
 					files: attachments
 				});
 			});
+
 		}).catch(error => {
+
 			this.log(error);								// We caught an error while sending to Discord, so we can only log it.
+
 		}).finally(() => {
+
 			this.in_flight = false;
 			this.ai_abortcontroller = null;
 			if (last && this.channel) {
@@ -702,6 +729,7 @@ const bot_prototype = {
 					reaction.remove().catch(error => console.error("Failed to clear reaction:", error));
 				}
 			}
+
 		});
 	},
 
