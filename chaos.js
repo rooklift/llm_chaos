@@ -125,8 +125,8 @@ const bot_prototype = {
 				cancelled: false,								// Assume this can be true even if nothing in-flight!
 				last_msg: null,									// Last message received. Purely for emoji reactions.
 				last_handled: BigInt(-1),						// Snowflake (as BigInt) of the last thing we responsed to. Can be artificially set with !break
-				sent_chars: 0,									// Needs to be converted to token count to be useful.
-				received_chars: 0,								// Likewise.
+				sent_tokens: 0,									// Count, currently just estimated.
+				received_tokens: 0,								// Count, based on actual metadata in response JSON.
 				input_price: cfg.input_price || 0,				// Expressed as dollars per million tokens.
 				output_price: cfg.output_price || 0,			// Note that there are issues with not counting reasoning tokens.
 			});
@@ -481,10 +481,8 @@ const bot_prototype = {
 	},
 
 	send_cost: function(msg) {
-		let itok = this.sent_chars / CHAR_TOKEN_RATIO;
-		let otok = this.received_chars / CHAR_TOKEN_RATIO;
 		let s = "```\n" +
-		`I/O:             ${itok.toFixed(0)} tokens (input) + ${otok.toFixed(0)} tokens (output)\n` +
+		`I/O:             ${this.sent_tokens} tokens (input) + ${this.received_tokens} tokens (output)\n` +
 		`Cost:            ${this.estimated_cost()}\n` +
 		"```";
 		this.msg_reply(msg, s);
@@ -494,16 +492,14 @@ const bot_prototype = {
 		if (!this.input_price || !this.output_price) {
 			return "Prices unknown!";
 		}
-		let input_tokens = this.sent_chars / CHAR_TOKEN_RATIO;
-		let output_tokens = this.received_chars / CHAR_TOKEN_RATIO;
-		let i_cost = input_tokens * this.input_price / 1000000;
-		let o_cost = output_tokens * this.output_price / 1000000;
+		let i_cost = this.sent_tokens * this.input_price / 1000000;
+		let o_cost = this.received_tokens * this.output_price / 1000000;
 		let s = (i_cost + o_cost).toFixed(4);
 		let dot_index = s.indexOf(".");
 		while (s.endsWith("0") && s.length - dot_index > 3) {
 			s = s.slice(0, -1);
 		}
-		return `$${s} (estimated; WARNING: ignores reasoning if hidden, e.g. OpenAI)`;
+		return "$" + s;
 	},
 
 	msg_is_mine: function(msg) {
@@ -631,14 +627,14 @@ const bot_prototype = {
 
 		let conversation = this.format_history();
 
-		this.sent_chars += conversation.reduce((total, s) => total + s.length, 0);
-		this.sent_chars += this.ai_client.config.system_prompt.length;
+		let sent_chars_estimate = conversation.reduce((total, s) => total + s.length, 0) + this.ai_client.config.system_prompt.length;
+		this.sent_tokens += Math.floor(sent_chars_estimate / CHAR_TOKEN_RATIO);			// We *could* try to get the value from the response later instead...?
 
 		this.in_flight = "Contacting LLM";
 		this.cancelled = false;
 		this.ai_abortcontroller = new AbortController();
 
-		// Promise.resolve("I would have sent something.").catch(error => {		// Use this for testing.
+		// Promise.resolve("I would have sent something.").catch(error => {				// Use this for testing.
 
 		this.ai_client.send_conversation(conversation, false, this.ai_abortcontroller).catch(error => {
 			if (error.name !== "AbortError") {
@@ -659,13 +655,11 @@ const bot_prototype = {
 				}
 				return null;
 			}
-			this.received_chars += response.length;
 			response = helpers.normalize_linebreaks(response);							// Llama Base confused me once with \r
 			this.add_own_response_to_history(response);
-			let chunks = [];									// Each chunk ends up being its very own Discord message.
-			let think = this.ai_client.get_last_think();
+			let chunks = [];															// Each chunk ends up being its very own Discord message.
+			let think = this.ai_client.get_last_think();								// think will be "" if not available.
 			if (think) {
-				this.received_chars += think.length;
 				if (this.show_reasoning) {
 					let think_chunks = helpers.split_text_into_chunks(think, 1970);		// Some margin of characters to add stuff.
 					for (let i = 0; i < think_chunks.length; i++) {
@@ -677,6 +671,12 @@ const bot_prototype = {
 			}
 			let [text, attachments] = create_text_and_attachments(response);
 			chunks.push(...helpers.split_text_into_chunks(text, 1999));
+			let accurate_received_tokens = this.ai_client.get_last_output_token_count();
+			if (accurate_received_tokens) {
+				this.received_tokens += accurate_received_tokens;
+			} else {
+				this.received_tokens += Math.floor((think.length + response.length) / CHAR_TOKEN_RATIO);
+			}
 			let send_promise_chain = Promise.resolve();
 			for (let i = 0; i < chunks.length - 1; i++) {	// i < chunks.length - 1 is correct, the last chunk is handled below.
 				let chunk = chunks[i];
