@@ -305,6 +305,24 @@ const client_prototype = {
 		}
 	},
 
+	get_last_output_token_count: function() {
+		try {
+			let o = JSON.parse(this.last_receive);
+			if (typeof o?.usage?.output_tokens === "number") {							// Anthropic format
+				return o.usage.output_tokens;
+			}
+			if (typeof o?.usageMetadata?.candidatesTokenCount === "number") {			// Google format
+				return o.usageMetadata.candidatesTokenCount;
+			}
+			if (typeof o?.usage?.completion_tokens === "number") {						// OpenAI format
+				return o.usage.completion_tokens;
+			}
+			return 0;
+		} catch (error) {
+			return 0;
+		}
+	},
+
 	send_conversation: function(conversation, raw = false, abortcontroller = null) {
 		if (this.errors > this.config.max_errors) {
 			return Promise.reject(new TooManyErrors());
