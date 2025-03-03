@@ -305,6 +305,24 @@ const client_prototype = {
 		}
 	},
 
+	get_last_input_token_count: function() {
+		try {
+			let o = JSON.parse(this.last_receive);
+			if (typeof o?.usage?.input_tokens === "number") {							// Anthropic format
+				return o.usage.input_tokens;
+			}
+			if (typeof o?.usageMetadata?.promptTokenCount === "number") {				// Google format
+				return o.usageMetadata.promptTokenCount;
+			}
+			if (typeof o?.usage?.prompt_tokens === "number") {							// OpenAI format
+				return o.usage.prompt_tokens;
+			}
+			return 0;
+		} catch (error) {
+			return 0;
+		}
+	},
+
 	get_last_output_token_count: function() {
 		try {
 			let o = JSON.parse(this.last_receive);
