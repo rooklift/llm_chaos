@@ -1,1 +1,52 @@
-I should update this some time.
+{
+	"common": {
+		"owner": "jim",
+		"chaos": 0,
+		"system_prompt": "./system/standard.txt",
+		"ping_blind": false,
+		"show_reasoning": true,
+		"history_limit": 50,
+		"poll_wait": 20000
+	},
+	"known": [
+		{
+			"llm_key_file": "./secrets/anthropic.txt",
+			"bot_token_file": "./secrets/claude_bot_token.txt",
+			"emoji": "💡",
+			"ai_config": {
+				"model": "claude-3-7-sonnet-20250219",
+				"name": "Claude",
+				"full_name": "Claude 3.7 Sonnet",
+				"company": "Anthropic",
+				"url": "https://api.anthropic.com/v1/messages",
+				"anthropic_version": "2023-06-01",
+				"max_tokens_key": "max_tokens",
+				"max_tokens": 8192,
+				"temperature": 1,
+				"budget_tokens": 3072
+			},
+			"input_price": 3,
+			"output_price": 15
+		},
+		{
+			"llm_key_file": "./secrets/openai.txt",
+			"bot_token_file": "./secrets/o3_mini_bot_token.txt",
+			"emoji": "🤖",
+			"ai_config": {
+				"model": "o3-mini",
+				"name": "o3-mini",
+				"full_name": "o3-mini",
+				"company": "OpenAI",
+				"url": "https://api.openai.com/v1/chat/completions",
+				"max_tokens_key": "max_completion_tokens",
+				"max_tokens": 4096,
+				"temperature": -1,
+				"reasoning_effort": "medium",
+				"sp_role": "developer"
+			},
+			"input_price": 1.10,
+			"output_price": 4.40
+		}
+	],
+	"disabled": []
+}
