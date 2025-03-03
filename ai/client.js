@@ -48,8 +48,8 @@ function new_client(cfg) {
 
 	client.standard_system_prompt_replacements();
 
-	client.last_send = "null";							// Stored as JSON (string) to avoid mutation worries.
-	client.last_receive = "null";						// Likewise.
+	client.last_send = null;
+	client.last_receive = null;
 
 	return client;
 }
@@ -292,7 +292,7 @@ const client_prototype = {
 
 	get_last_think: function() {
 		try {
-			let o = JSON.parse(this.last_receive);
+			let o = this.last_receive;
 			if (this.is_anthropic()) {
 				if (!Array.isArray(o?.content)) return "";
 				let thinking_item = o.content.find(item => item?.type === "thinking");
@@ -307,7 +307,7 @@ const client_prototype = {
 
 	get_last_input_token_count: function() {				// The || 0 below is for the slight chance of NaN
 		try {
-			let o = JSON.parse(this.last_receive);
+			let o = this.last_receive;
 			if (typeof o?.usage?.input_tokens === "number") {							// Anthropic format
 				return o.usage.input_tokens || 0;
 			}
@@ -325,7 +325,7 @@ const client_prototype = {
 
 	get_last_output_token_count: function() {				// The || 0 below is for the slight chance of NaN
 		try {
-			let o = JSON.parse(this.last_receive);
+			let o = this.last_receive;
 			if (typeof o?.usage?.output_tokens === "number") {							// Anthropic format
 				return o.usage.output_tokens || 0;
 			}
@@ -343,8 +343,8 @@ const client_prototype = {
 
 	send_conversation: function(conversation, raw = false, abortcontroller = null) {
 
-		this.last_send = "null";
-		this.last_receive = "null";
+		this.last_send = null;
+		this.last_receive = null;
 
 		if (this.errors > this.config.max_errors) {
 			return Promise.reject(new TooManyErrors());
@@ -374,12 +374,11 @@ const client_prototype = {
 
 		return delay_promise.then(() => {
 			let [headers, data] = this.prepare_request(conversation, raw);
-			let stringified_data = JSON.stringify(data);
-			this.last_send = stringified_data;
+			this.last_send = data;
 			return fetch(this.config.url, {
 				method: "POST",
 				headers: headers,
-				body: stringified_data,
+				body: JSON.stringify(data),
 				signal: abortcontroller?.signal,
 			});
 		}).catch(error => {
@@ -396,7 +395,7 @@ const client_prototype = {
 				});
 			} else {
 				return response.json().then(data => {
-					this.last_receive = JSON.stringify(data);
+					this.last_receive = data;
 					return this.parse_200_response(data);
 				}).then(result => {						// result is a string.
 					this.register_success();

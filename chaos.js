@@ -837,15 +837,11 @@ const bot_prototype = {
 	},
 
 	log_last_input: function() {
-		let o = JSON.parse(this.ai_client.last_send);		// last_send means what was sent to the AI, i.e. its input.
-		let pretty = JSON.stringify(o, null, 4);
-		this.log(pretty);
+		this.log(JSON.stringify(this.ai_client.last_send, null, 4));
 	},
 
 	log_last_output: function() {
-		let o = JSON.parse(this.ai_client.last_receive);	// last_receive means what was received from the AI, i.e. its output.
-		let pretty = JSON.stringify(o, null, 4);
-		this.log(pretty);
+		this.log(JSON.stringify(this.ai_client.last_receive, null, 4));
 	},
 };
 
