@@ -11,12 +11,9 @@ const fs = require("fs");
 
 process.chdir(__dirname);
 
-const CHAR_TOKEN_RATIO = 3.6;				// For token estimates and cost estimates
-
-const DEFAULT_SP_FILE = "./system/standard.txt";
 const CONFIG_FILE = "./config.json";
-
 const STEGANOGRAPHY_PREFIXES = ["💭"];		// Any message starting with one of these is ignored.
+const CHAR_TOKEN_RATIO = 3.6;				// For token estimates and cost estimates.
 
 let bots = [];
 
@@ -60,11 +57,11 @@ const history_object_prototype = {
 };
 
 function normal_system_header(o) {
-	return `[[ Message from ${o.author_tag} (${o.author_type}, userid ${o.author_id}) follows... ]]\n`;
+	return `=== Message from ${o.author_tag} (${o.author_type}, userid ${o.author_id}) ===\n`;
 }
 
 function attachment_system_header(o) {
-	return `[[ File attached by ${o.author_tag} (${o.author_type}, userid ${o.author_id}) follows... ]]\n`;
+	return `=== File attached by ${o.author_tag} (${o.author_type}, userid ${o.author_id}) ===\n`;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -106,29 +103,38 @@ const bot_prototype = {
 			let ai_config = cfg.ai_config;
 
 			Object.assign(this, {
-				ai_client: null,								// Connection to the LLM via the ai library.
-				conn: null,										// Connection to Discord.
-				chaos: cfg.chaos || 0,							// Chance of responding randomly to a non-ping.
-				emoji: cfg.emoji || "💡",						// Emoji used to acknowledge receipt of message.
-				owner: common.owner,							// Name of the human in charge...
-				sp_location: cfg.system_prompt || DEFAULT_SP_FILE,	// Location of the system prompt, for (re)loading.
-				ping_blind: cfg.ping_blind || false,			// Whether this LLM's ping recognition is suppressed.
-				show_reasoning: cfg.show_reasoning || true,		// Whether thinking blocks are shown (if available).
-				history_limit: cfg.history_limit || common.history_limit,	// Max history length.
-				poll_wait: cfg.poll_wait || common.poll_wait,	// Delay for maybe_respond_spinner().
-				poll_id: null,									// setTimeout id, for cancellation.
-				history: [],									// Using only history_objects as defined above.
-				queue: [],										// Messages (as Discord objects) waiting to be processed.
-				channel: null,									// The actual channel object, hopefully safe to store?
-				in_flight: false,								// Any http request in progress, to LLM or Discord? Value can be string indicating why.
-				ai_abortcontroller: null,						// AbortController for cancelling LLM requests only.
-				cancelled: false,								// Assume this can be true even if nothing in-flight!
-				last_msg: null,									// Last message received. Purely for emoji reactions.
-				last_handled: BigInt(-1),						// Snowflake (as BigInt) of the last thing we responsed to. Can be artificially set with !break
-				sent_tokens: 0,									// Count, currently just estimated.
-				received_tokens: 0,								// Count, based on actual metadata in response JSON.
-				input_price: cfg.input_price || 0,				// Expressed as dollars per million tokens.
-				output_price: cfg.output_price || 0,			// Note that there are issues with not counting reasoning tokens.
+
+				ai_client: null,														// Connection to the LLM via the ai library.
+				conn: null,																// Connection to Discord.
+
+				top_header: cfg.top_header || common.top_header || "",					// System header to include at start of a foreign message block.
+				end_header: cfg.end_header || common.end_header || "",					// System header to include at end of a foreign message block.
+
+				owner: common.owner,													// Name of the human in charge...
+				chaos: cfg.chaos || common.chaos || 0,									// Chance of responding randomly to a non-ping.
+				emoji: cfg.emoji || common.emoji || "💡",								// Emoji used to acknowledge receipt of message.
+				sp_location: cfg.system_prompt || common.system_prompt,					// Location of the system prompt, for (re)loading.
+				ping_blind: cfg.ping_blind || common.ping_blind || false,				// Whether this LLM's ping recognition is suppressed.
+				show_reasoning: cfg.show_reasoning || common.show_reasoning || true,	// Whether thinking blocks are shown (if available).
+				history_limit: cfg.history_limit || common.history_limit,				// Max history length.
+				poll_wait: cfg.poll_wait || common.poll_wait,							// Delay for maybe_respond_spinner().
+
+				input_price: cfg.input_price || 0,										// Expressed as dollars per million tokens.
+				output_price: cfg.output_price || 0,									// Note that there are issues with not counting reasoning tokens.
+
+				sent_tokens: 0,															// Count, usually based on actual metadata in response JSON.
+				received_tokens: 0,														// Likewise.
+
+				poll_id: null,															// setTimeout id, for cancellation.
+				history: [],															// Using only history_objects as defined above.
+				queue: [],																// Messages (as Discord objects) waiting to be processed.
+				channel: null,															// The actual channel object, hopefully safe to store?
+				in_flight: false,														// Any http request in progress, to LLM or Discord? String indicating why.
+				ai_abortcontroller: null,												// AbortController for cancelling LLM requests only.
+				cancelled: false,														// Assume this can be true even if nothing in-flight!
+				last_msg: null,															// Last message received. Purely for emoji reactions.
+				last_handled: BigInt(-1),												// Snowflake (as BigInt) of the last thing we responsed to.
+
 			});
 
 			this.ai_client = ai.new_client(ai_config);
@@ -471,6 +477,7 @@ const bot_prototype = {
 		`Channel:         ${this.channel?.id === msg.channel.id ? msg.channel.name : (this.channel ? "other" : this.channel)}\n` +
 		`Ping-blind:      ${this.ping_blind}\n` +
 		`Chaos:           ${this.chaos.toFixed(2)}\n` +
+		`Show reasoning:  ${this.show_reasoning}\n` +
 		`In flight:       ${this.in_flight}\n` +
 		`Poll delay:      ${this.poll_wait}\n` +
 		`Queue length:    ${this.queue.length}\n` +
@@ -752,9 +759,6 @@ const bot_prototype = {
 		// Take the history and create a new array such that every 2nd message in the new
 		// array is from me, concatenating messages as required to maintain this goal.
 
-		const SYSTEM_START = "[[ New messages received! ]]";
-		const SYSTEM_END = "[[ You can reply! Do not write the square-bracketed metadata. ]]";
-
 		let ret = [];
 		let current_block = [];
 		let reading_own_messages = false;
@@ -762,7 +766,9 @@ const bot_prototype = {
 		const push_block = () => {					// Helper to finalize and store the current block.
 			if (current_block.length > 0) {
 				if (!reading_own_messages) {
-					ret.push([ /* SYSTEM_START, */ ...current_block, SYSTEM_END].join("\n\n"));
+					if (this.top_header) current_block.unshift(this.top_header);
+					if (this.end_header) current_block.push(this.end_header);
+					ret.push(current_block.join("\n\n"));
 				} else {
 					ret.push(current_block.join("\n\n"));
 				}
@@ -896,7 +902,6 @@ const danger = `
 function splash() {
 	console.log();
 	console.log(`            Script date: ${helpers.format_timestamp(fs.statSync(__filename).mtime)}`);
-	console.log(`     System prompt date: ${helpers.format_timestamp(fs.statSync(DEFAULT_SP_FILE).mtime)}`);
 	console.log(`   LLM chaos started at: ${helpers.format_timestamp(new Date())}`);
 	console.log();
 	console.log(danger.trim());
