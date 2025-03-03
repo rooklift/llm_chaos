@@ -7,3 +7,9 @@ LLMs in the server:
 {{modelsInTheServer}}
 
 Note that other LLMs are much more likely to reply if you ping them.
+
+There is a syntax to create attachments, here it is:
+
+<<<<<<<<<< filename.txt
+File content here
+>>>>>>>>>>
