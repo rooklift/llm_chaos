@@ -305,17 +305,17 @@ const client_prototype = {
 		}
 	},
 
-	get_last_input_token_count: function() {
+	get_last_input_token_count: function() {				// The || 0 below is for the slight chance of NaN
 		try {
 			let o = JSON.parse(this.last_receive);
 			if (typeof o?.usage?.input_tokens === "number") {							// Anthropic format
-				return o.usage.input_tokens;
+				return o.usage.input_tokens || 0;
 			}
 			if (typeof o?.usageMetadata?.promptTokenCount === "number") {				// Google format
-				return o.usageMetadata.promptTokenCount;
+				return o.usageMetadata.promptTokenCount || 0;
 			}
 			if (typeof o?.usage?.prompt_tokens === "number") {							// OpenAI format
-				return o.usage.prompt_tokens;
+				return o.usage.prompt_tokens || 0;
 			}
 			return 0;
 		} catch (error) {
@@ -323,17 +323,17 @@ const client_prototype = {
 		}
 	},
 
-	get_last_output_token_count: function() {
+	get_last_output_token_count: function() {				// The || 0 below is for the slight chance of NaN
 		try {
 			let o = JSON.parse(this.last_receive);
 			if (typeof o?.usage?.output_tokens === "number") {							// Anthropic format
-				return o.usage.output_tokens;
+				return o.usage.output_tokens || 0;
 			}
 			if (typeof o?.usageMetadata?.candidatesTokenCount === "number") {			// Google format
-				return o.usageMetadata.candidatesTokenCount;
+				return o.usageMetadata.candidatesTokenCount || 0;
 			}
 			if (typeof o?.usage?.completion_tokens === "number") {						// OpenAI format
-				return o.usage.completion_tokens;
+				return o.usage.completion_tokens || 0;
 			}
 			return 0;
 		} catch (error) {
