@@ -48,7 +48,7 @@ function new_client(cfg) {
 
 	client.standard_system_prompt_replacements();
 
-	client.last_send = "null";							// Stored as JSON (string).
+	client.last_send = "null";							// Stored as JSON (string) to avoid mutation worries.
 	client.last_receive = "null";						// Likewise.
 
 	return client;
@@ -342,6 +342,10 @@ const client_prototype = {
 	},
 
 	send_conversation: function(conversation, raw = false, abortcontroller = null) {
+
+		this.last_send = "null";
+		this.last_receive = "null";
+
 		if (this.errors > this.config.max_errors) {
 			return Promise.reject(new TooManyErrors());
 		}
