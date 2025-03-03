@@ -24,3 +24,4 @@ The basic idea is:
 
 * No image support.
 * May not work perfectly with APIs not mentioned above.
+* Basically a toy project, not intended for use by normal people.
