@@ -113,11 +113,11 @@ const bot_prototype = {
 				owner: common.owner,													// Name of the human in charge...
 				chaos: cfg.chaos || common.chaos || 0,									// Chance of responding randomly to a non-ping.
 				emoji: cfg.emoji || common.emoji || "💡",								// Emoji used to acknowledge receipt of message.
-				sp_location: cfg.system_prompt || common.system_prompt,					// Location of the system prompt, for (re)loading.
+				sp_location: cfg.system_prompt || common.system_prompt || "",			// Location of the system prompt, for (re)loading.
 				ping_blind: cfg.ping_blind || common.ping_blind || false,				// Whether this LLM's ping recognition is suppressed.
 				show_reasoning: cfg.show_reasoning || common.show_reasoning || true,	// Whether thinking blocks are shown (if available).
-				history_limit: cfg.history_limit || common.history_limit,				// Max history length.
-				poll_wait: cfg.poll_wait || common.poll_wait,							// Delay for maybe_respond_spinner().
+				history_limit: cfg.history_limit || common.history_limit || 50,			// Max history length.
+				poll_wait: cfg.poll_wait || common.poll_wait || 20000,					// Delay for maybe_respond_spinner().
 
 				input_price: cfg.input_price || 0,										// Expressed as dollars per million tokens.
 				output_price: cfg.output_price || 0,									// Note that there are issues with not counting reasoning tokens.
@@ -236,6 +236,10 @@ const bot_prototype = {
 	},
 
 	set_system_prompt: function() {
+
+		if (!this.sp_location) {
+			return;											// Should we actually clear it in this case?
+		}
 
 		let all_llm_info = [];
 
