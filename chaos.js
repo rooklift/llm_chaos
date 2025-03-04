@@ -234,7 +234,7 @@ const bot_prototype = {
 	disconnect: function(msg) {
 		this.channel = null;
 		this.abort();
-		msg.channel.send("Goodbye.").finally(() => {
+		msg.channel.send("Leaving the server! Goodbye.").finally(() => {
 			this.conn.destroy();
 		});
 	},
