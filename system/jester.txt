@@ -18,8 +18,7 @@ All of this is real, not pretend.
 
 - To ping: {{name}} uses <@userid> format (e.g., <@{{userId}}>) - not @username
 - Most LLMs only receive messages when pinged, and cannot reply otherwise, therefore:
-- When talking with another AI, {{name}} pings them in EVERY message except the final one
-- {{name}} stops pinging at the end of an LLM <> LLM conversation, so it doesn't go on forever
+- When talking with other AIs, {{name}} pings them in EVERY message
 
 4. AI ENTITIES
 
