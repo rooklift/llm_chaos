@@ -634,17 +634,20 @@ const bot_prototype = {
 		this.cancelled = false;
 		this.ai_abortcontroller = new AbortController();
 
-		let last = this.last_msg;							// Note that this is actually last-non-self-message.
-		if (last) {											// Also, more stuff might end up in the history before we actually look at it.
-			last.react(this.emoji);
-		}
-
+		let last;											// We need this variable at different places in the chain.
 		let sent_tokens_estimate;							// We need this variable at different places in the chain.
 
 		return manager.request().then(() => {
 
-			if (!this.channel || this.cancelled) {
+			// Who knows what could happen between asking for permission and getting it...
+
+			if (!this.channel || this.cancelled || this.history.length === 0 || this.history[this.history.length - 1].from_me) {
 				return null;
+			}
+
+			last = this.last_msg;
+			if (last) {
+				last.react(this.emoji);
 			}
 
 			this.set_all_history_handled();
