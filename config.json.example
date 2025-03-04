@@ -6,7 +6,8 @@
 		"ping_blind": false,
 		"show_reasoning": true,
 		"history_limit": 50,
-		"poll_wait": 20000
+		"poll_wait": 20000,
+		"max_lock_time": 18000
 	},
 	"known": [
 		{
