@@ -1,17 +1,5 @@
 "use strict";
 
-// Notes on non-obvious fields:
-//
-//	max_tokens_key		-- The key used in the data object when specifying the max tokens value; OpenAI deprecated "max_tokens"
-//	sp_role				-- The role for IN-ARRAY system prompt messages, typically "system" but maybe "developer" or "user"
-//
-// Note on OpenRouter reasoning models:
-// For OpenRouter, we have to set "include_reasoning" if we want to get sent the reasoning (if any).
-// In that case, it comes back in a separate part of the response JSON.
-//
-// Ultimately the client's copy of the config will get every field.
-// Some can use "" or -1 to be unused.
-
 exports.Required = ["model", "name", "company", "url"];
 
 // Lets just say that Defaults has every key, so we can check for wrong keys in configs...
@@ -25,8 +13,8 @@ exports.Defaults = {
 
 	full_name: "",					// This is mostly for system prompts. If unset, is auto-set to name.
 
-	max_tokens_key: "max_tokens",
-	sp_role: "system",
+	max_tokens_key: "max_tokens",	// The key used in the data object when specifying the max tokens value; OpenAI deprecated "max_tokens"
+	sp_role: "system",				// The role for IN-ARRAY system prompt messages, typically "system" but maybe "developer" or "user"
 
 	max_tokens: 8192,
 	system_prompt: "",				// Not sent if ""
