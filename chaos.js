@@ -7,6 +7,7 @@
 const ai = require("./ai");
 const discord = require("discord.js");
 const helpers = require("./chaos_helpers");
+const manager = require("./chaos_manager");
 const fs = require("fs");
 
 process.chdir(__dirname);
@@ -268,13 +269,10 @@ const bot_prototype = {
 	},
 
 	process_queue: function() {
-		while (true) {
-			if (this.in_flight) {
-				return;
-			}
-			if (this.queue.length === 0) {
-				return;
-			}
+
+		let human_mentions_me = false;
+
+		while (this.queue.length > 0) {
 			let msg = this.queue.shift();
 			if (!this.channel) {							// i.e. the first real message we ever see sets the channel.
 				this.reset(msg);
@@ -285,13 +283,18 @@ const bot_prototype = {
 				}
 				continue;
 			}
-			// Note that, if a human pings the bot, the following 2 functions will instantly reply and set in_flight,
-			// which prevents further processing of the queue (until later). That's intended behaviour.
 			if (msg.attachments.size === 0) {
 				this.process_simple_msg(msg);
 			} else {
-				this.process_msg_with_attachments(msg);		// While this likely could handle zero-attachment messages too, it's complex.
+				this.process_msg_with_attachments(msg);
 			}
+			if (msg_from_human(msg) && this.msg_mentions_me(msg)) {
+				human_mentions_me = true;
+			}
+		}
+
+		if (human_mentions_me) {
+			this.maybe_respond();			// But if there were attachments, we will be in-flight and so we won't be able to respond.
 		}
 	},
 
@@ -302,9 +305,6 @@ const bot_prototype = {
 
 	process_simple_msg: function(msg) {
 		this.add_base_message_to_history(msg);
-		if (msg_from_human(msg) && this.msg_mentions_me(msg)) {
-			this.maybe_respond();							// Instant response to human messages
-		}
 	},
 
 	process_msg_with_attachments: function(msg) {
@@ -330,10 +330,8 @@ const bot_prototype = {
 			}
 		}).then(() => {
 			this.in_flight = false;
-			if (!this.cancelled) {
-				if (msg_from_human(msg) && this.msg_mentions_me(msg)) {
-					this.maybe_respond();					// Instant response to human messages.
-				}
+			if (msg_from_human(msg) && this.msg_mentions_me(msg)) {			// Try to respond instantly if it's a human ping.
+				this.maybe_respond();
 			}
 		});
 	},
@@ -622,7 +620,9 @@ const bot_prototype = {
 	maybe_respond: function() {
 		if (this.can_respond()) {
 			this.respond();
+			return true;
 		}
+		return false;
 	},
 
 	respond: function() {
@@ -630,25 +630,33 @@ const bot_prototype = {
 		// Regardless of what actually triggered the response, it's reasonable to consider us as reacting to the last message
 		// in the history, since we see up to that point.
 
-		let last = this.last_msg;							// Note that this is actually last-non-self-message
-		if (last) {
-			last.react(this.emoji);							// The patented reply reaction emoji.
-		}
-		this.set_all_history_handled();
-
-		let conversation = this.format_history();
-
-		let sent_chars_estimate = conversation.reduce((total, s) => total + s.length, 0) + this.ai_client.config.system_prompt.length;
-		let sent_tokens_estimate = Math.floor(sent_chars_estimate / CHAR_TOKEN_RATIO);
-		this.sent_tokens += sent_tokens_estimate;			// But we might undo this if we can get the real value later.
-
 		this.in_flight = "Contacting LLM";
 		this.cancelled = false;
 		this.ai_abortcontroller = new AbortController();
 
-		// Promise.resolve("I would have sent something.").catch(error => {				// Use this for testing.
+		let last = this.last_msg;							// Note that this is actually last-non-self-message.
+		if (last) {											// Also, more stuff might end up in the history before we actually look at it.
+			last.react(this.emoji);
+		}
 
-		this.ai_client.send_conversation(conversation, false, this.ai_abortcontroller).catch(error => {
+		let sent_tokens_estimate;							// We need this variable at different places in the chain.
+
+		return manager.request().then(() => {
+
+			if (!this.channel || this.cancelled) {
+				return null;
+			}
+
+			this.set_all_history_handled();
+			let conversation = this.format_history();
+
+			let sent_chars_estimate = conversation.reduce((total, s) => total + s.length, 0) + this.ai_client.config.system_prompt.length;
+			sent_tokens_estimate = Math.floor(sent_chars_estimate / CHAR_TOKEN_RATIO);
+			this.sent_tokens += sent_tokens_estimate;		// But we might undo this if we can get the real value later.
+
+			return this.ai_client.send_conversation(conversation, false, this.ai_abortcontroller);
+
+		}).catch(error => {
 
 			if (error.name !== "AbortError") {
 				this.log(error);
@@ -731,8 +739,10 @@ const bot_prototype = {
 
 		}).finally(() => {
 
+			manager.release();
 			this.in_flight = false;
 			this.ai_abortcontroller = null;
+
 			if (last && this.channel) {
 				let reaction = last.reactions.cache.get(this.emoji);
 				if (reaction) {
