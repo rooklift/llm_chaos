@@ -126,7 +126,7 @@ const bot_prototype = {
 				history: [],															// Using only history_objects as defined above.
 				queue: [],																// Messages (as Discord objects) waiting to be processed.
 				channel: null,															// The actual channel object, hopefully safe to store?
-				in_flight: false,														// Any http request in progress, to LLM or Discord? String indicating why.
+				in_flight: false,														// http request in progress to LLM? (Only to LLM now.)
 				ai_abortcontroller: null,												// AbortController for cancelling LLM requests only.
 				cancelled: false,														// Assume this can be true even if nothing in-flight!
 				last_msg: null,															// Last message received. Purely for emoji reactions.
@@ -312,15 +312,9 @@ const bot_prototype = {
 
 	process_msg_with_attachments: function(msg) {
 
-		this.in_flight = "Downloading attachments";
-		this.cancelled = false;
-
 		let all_fetches = attachment_fetches(msg);			// See that function for the format of the resolved values.
 
 		Promise.allSettled(all_fetches).then(results => {
-			if (this.cancelled) {
-				return;
-			}
 			if (msg.content.trim()) {
 				this.add_base_message_to_history(msg);		// Now's a good time to add the main msg to the history.
 			}
@@ -332,7 +326,6 @@ const bot_prototype = {
 				}
 			}
 		}).then(() => {
-			this.in_flight = false;
 			if (msg_from_human(msg) && this.msg_mentions_me(msg)) {			// Try to respond instantly if it's a human ping.
 				this.maybe_respond();
 			}
@@ -651,7 +644,7 @@ const bot_prototype = {
 		// Regardless of what actually triggered the response, it's reasonable to consider us as reacting to the last message
 		// in the history, since we see up to that point.
 
-		this.in_flight = "Contacting LLM";
+		this.in_flight = true;
 		this.cancelled = false;
 		this.ai_abortcontroller = new AbortController();
 
