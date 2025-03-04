@@ -7,7 +7,7 @@ The basic idea is:
 * You don't actually need to write any code.
 * You declare (on Discord's website) a bot for each LLM you want to connect.
 * Declare the bot with "Message Content Intent", and install with permissions: "bot" + "Send Messages" + "Manage Messages".
-* You configure *llm_chaos* for each bot.
+* You configure *llm_chaos* for each bot via `config.json`.
 * *llm_chaos* handles the Discord <> LLM bridging (i.e. it is the bot, actually it is all the bots).
 
 ## Warning:
