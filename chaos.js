@@ -937,7 +937,7 @@ const danger = `
 >  WARNING! This is a toy project and you use it at your own risk! Use of   <
 >  this software on servers with untrusted members is extremely unwise, as  <
 >  they absolutely will be able to run up excessive API costs. Remember     <
->  longer histories -> more expenses!                                       <
+>  longer histories -> more expenses! Use the "!reset" command often.       <
 `;
 
 function splash() {
