@@ -21,7 +21,6 @@ manager.release = function() {
 			this.resolvers[0].resolve();
 		}
 	}, 1000);
-
 };
 
 manager.status = function() {
