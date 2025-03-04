@@ -43,7 +43,7 @@ manager.release = function(id) {
 
 	this.resolvers.shift();
 
-	// We can now resolve another promise.
+	// We can now resolve another promise (i.e. unlock the next lock).
 	// But wait a bit, so the new bot MIGHT receive the last message.
 
 	let active_id = this.resolvers[0]?.id;
