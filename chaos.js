@@ -151,6 +151,10 @@ const bot_prototype = {
 				resolve(this);						// The promise returned by init() is resolved when the Discord connection is "ready"
 			});
 
+			if (typeof common.max_lock_time === "number") {
+				manager.set_max_lock_time(common.max_lock_time);
+			}
+
 			let commands = {	// Note that the first arg received by all of these will be msg. Then any other args (which most don't use).
 			"!abort":     [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !break."                                                 ],
 			"!blind":     [(msg, ...args) =>         this.set_blindness(msg, ...args), "Set / toggle being ping-blind."                                    ],
@@ -164,6 +168,7 @@ const bot_prototype = {
 			"!help":      [(msg, ...args) =>                       help(msg, ...args), "Display this message."                                             ],
 			"!history":   [(msg, ...args) =>          this.dump_history(msg, ...args), "Dump the internal history to the console."                         ],
 			"!input":     [(msg, ...args) =>        this.log_last_input(msg, ...args), "Dump the last body sent to the LLM's API to the console."          ],
+			"!lock":      [(msg, ...args) =>     this.set_max_lock_time(msg, ...args), "Set the system-wide max_lock_time."                                ],
 			"!manager":   [(msg, ...args) =>    this.send_manager_debug(msg, ...args), "Display the state of the manager in this channel."                 ],
 			"!memory":    [(msg, ...args) =>     this.set_history_limit(msg, ...args), "Set the number of messages saved in the history."                  ],
 			"!output":    [(msg, ...args) =>       this.log_last_output(msg, ...args), "Dump the last body received from the LLM's API to the console."    ],
@@ -440,6 +445,16 @@ const bot_prototype = {
 			this.poll_wait = n;
 			this.msg_reply(msg, `Polling delay: ${n} milliseconds`);
 			this.maybe_respond_spinner();						// Restart the polling loop.
+		}
+	},
+
+	set_max_lock_time: function(msg, val) {
+		let n = parseInt(val);
+		if (Number.isNaN(n) || n < 0) {
+			this.msg_reply(msg, `Invalid argument (current value: ${manager.max_lock_time})`);
+		} else {
+			manager.set_max_lock_time(n);
+			this.msg_reply(msg, `System-wide lock time: ${n}`);
 		}
 	},
 

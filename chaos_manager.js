@@ -9,6 +9,7 @@ const manager = Object.create(null);
 
 manager.resolvers = [];
 manager.next_id = 1;
+manager.max_lock_time = 18000;
 
 manager.request = function(owner) {				// owner is just a string used purely for debugging.
 	let id = this.next_id++;
@@ -16,7 +17,7 @@ manager.request = function(owner) {				// owner is just a string used purely for
 		this.resolvers.push({ owner: owner, id: id, do_resolve: () => {
 			this.setup_autorelease(id);
 			resolve(id);
-		});
+		}});
 	});
 	if (this.resolvers.length === 1) {			// The new promise is the only one, so we can resolve it.
 		this.resolvers[0].do_resolve();
@@ -24,10 +25,14 @@ manager.request = function(owner) {				// owner is just a string used purely for
 	return promise;
 };
 
+manager.set_max_lock_time = function(n) {
+	this.max_lock_time = n;
+};
+
 manager.setup_autorelease = function(id) {
 	setTimeout(() => {
 		this.release(id);
-	}, 20000);
+	}, this.max_lock_time);
 };
 
 manager.release = function(id) {
