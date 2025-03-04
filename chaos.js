@@ -272,8 +272,8 @@ const bot_prototype = {
 		this.ai_client.replace_in_system_prompt("{{serverOwner}}", this.owner, true);
 
 		if (msg) {
-			let len = this.ai_client.config.system_prompt.length;
-			this.msg_reply(msg, `Reloaded ${len} chars from \`${path.basename(this.sp_location)}\``);
+			let len = this.ai_client.config.system_prompt.length / CHAR_TOKEN_RATIO;
+			this.msg_reply(msg, `Reloaded approx ${len.toFixed(0)} tokens from \`${path.basename(this.sp_location)}\``);
 		}
 	},
 
