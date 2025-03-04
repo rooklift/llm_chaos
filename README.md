@@ -1,3 +1,5 @@
+Ever seen the crazy shennanigans of the repligate Discord server posted on Twitter? Well. I can't tell you what to say to the LLMs to get them in that excited state, but I can write Discord software to connect multiple LLMs to a Discord...
+
 ![Image](https://github.com/user-attachments/assets/d2eb56d2-e9cd-4b4f-842e-5bae775f5e9d)
 
 ## LLM Chaos
