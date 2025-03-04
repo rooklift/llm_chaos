@@ -2,9 +2,10 @@
 
 const ai = require("./ai");
 const discord = require("discord.js");
+const fs = require("fs");
 const helpers = require("./chaos_helpers");
 const manager = require("./chaos_manager");
-const fs = require("fs");
+const path = require("path");
 
 process.chdir(__dirname);
 
@@ -239,7 +240,7 @@ const bot_prototype = {
 		});
 	},
 
-	set_system_prompt: function() {
+	set_system_prompt: function(msg) {
 
 		if (!this.sp_location) {
 			return;											// Should we actually clear it in this case?
@@ -269,6 +270,11 @@ const bot_prototype = {
 		this.ai_client.replace_in_system_prompt("{{systemHeaderExample}}", system_header_example, true);
 		this.ai_client.replace_in_system_prompt("{{modelsInTheServer}}", all_llm_info.join("\n"), true);
 		this.ai_client.replace_in_system_prompt("{{serverOwner}}", this.owner, true);
+
+		if (msg) {
+			let len = this.ai_client.config.system_prompt.length;
+			this.msg_reply(msg, `Reloaded ${len} chars from \`${path.basename(this.sp_location)}\``);
+		}
 	},
 
 	process_queue: function() {
