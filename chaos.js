@@ -953,7 +953,7 @@ function main() {
 	let config = JSON.parse(fs.readFileSync(CONFIG_FILE));
 	let common = config.common;
 
-	let included = config.known.filter(o => !config.disabled.includes(o.ai_config.model));
+	let included = config.known.filter(o => !Array.isArray(config.disabled) || !config.disabled.includes(o.ai_config.model));
 
 	check_bot_tokens(included);
 
