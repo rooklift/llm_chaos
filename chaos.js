@@ -151,6 +151,9 @@ const bot_prototype = {
 			if (typeof common.max_lock_time === "number") {
 				manager.set_max_lock_time(common.max_lock_time);
 			}
+			if (typeof common.lock_buffer_time === "number") {
+				manager.set_lock_buffer_time(common.lock_buffer_time);
+			}
 
 			let commands = {	// Note that the first arg received by all of these will be msg. Then any other args (which most don't use).
 			"!abort":     [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !break."                                                 ],
@@ -167,6 +170,7 @@ const bot_prototype = {
 			"!history":   [(msg, ...args) =>          this.dump_history(msg, ...args), "Dump the internal history to the console."                         ],
 			"!input":     [(msg, ...args) =>        this.log_last_input(msg, ...args), "Dump the last body sent to the LLM's API to the console."          ],
 			"!lock":      [(msg, ...args) =>     this.set_max_lock_time(msg, ...args), "Set the system-wide max_lock_time."                                ],
+			"!lockbuffer":[(msg, ...args) =>  this.set_lock_buffer_time(msg, ...args), "Set the system-wide lock_buffer_time."                             ],
 			"!manager":   [(msg, ...args) =>    this.send_manager_debug(msg, ...args), "Display the state of the manager in this channel."                 ],
 			"!memory":    [(msg, ...args) =>     this.set_history_limit(msg, ...args), "Set the number of messages saved in the history."                  ],
 			"!output":    [(msg, ...args) =>       this.log_last_output(msg, ...args), "Dump the last body received from the LLM's API to the console."    ],
@@ -457,6 +461,16 @@ const bot_prototype = {
 		}
 	},
 
+	set_lock_buffer_time: function(msg, val) {
+		let n = parseInt(val);
+		if (Number.isNaN(n) || n < 0) {
+			this.msg_reply(msg, `Invalid argument (current value: ${manager.set_lock_buffer_time})`);
+		} else {
+			manager.set_lock_buffer_time(n);
+			this.msg_reply(msg, `System-wide lock buffer time: ${n}`);
+		}
+	},
+
 	abort: function(msg = null) {
 		if (this.ai_abortcontroller) {
 			this.ai_abortcontroller.abort(new ai.AbortError());
@@ -508,6 +522,7 @@ const bot_prototype = {
 		let s = "```\n" +
 		`Manager queue:   ${manager.status()}\n` +
 		`Max lock time:   ${manager.max_lock_time}\n` +
+		`Lock buffer t:   ${manager.lock_buffer_time}\n` +
 		"```";
 		this.msg_reply(msg, s);
 	},

@@ -9,7 +9,8 @@ const manager = Object.create(null);
 
 manager.resolvers = [];
 manager.next_id = 1;
-manager.max_lock_time = 18000;					// This will be overridden by config.json probably.
+manager.max_lock_time = 18000;					// This can be overridden by config.json
+manager.lock_buffer_time = 1000;				// This can be overridden by config.json
 
 manager.request = function(owner) {				// owner is just a string used purely for debugging.
 	let id = this.next_id++;
@@ -30,6 +31,10 @@ manager.request = function(owner) {				// owner is just a string used purely for
 
 manager.set_max_lock_time = function(n) {
 	this.max_lock_time = n;
+};
+
+manager.set_lock_buffer_time = function(n) {
+	this.lock_buffer_time = n;
 };
 
 manager.setup_autorelease = function(id) {
@@ -57,12 +62,12 @@ manager.release = function(id) {
 				return;
 			}
 			this.resolvers[0].do_resolve();
-		}, 1000);
+		}, this.lock_buffer_time);
 	}
 };
 
 manager.status = function() {
-	return `${this.resolvers.map(o => `${o.owner} (ID: ${o.id})`).join(", ")}`;
+	return `[${this.resolvers.map(o => `${o.owner} (ID: ${o.id})`).join(", ")}]`;
 };
 
 module.exports = manager;
