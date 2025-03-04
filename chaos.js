@@ -164,6 +164,7 @@ const bot_prototype = {
 			"!help":      [(msg, ...args) =>                       help(msg, ...args), "Display this message."                                             ],
 			"!history":   [(msg, ...args) =>          this.dump_history(msg, ...args), "Dump the internal history to the console."                         ],
 			"!input":     [(msg, ...args) =>        this.log_last_input(msg, ...args), "Dump the last body sent to the LLM's API to the console."          ],
+			"!manager":   [(msg, ...args) =>    this.send_manager_debug(msg, ...args), "Display the state of the manager in this channel."                 ],
 			"!memory":    [(msg, ...args) =>     this.set_history_limit(msg, ...args), "Set the number of messages saved in the history."                  ],
 			"!output":    [(msg, ...args) =>       this.log_last_output(msg, ...args), "Dump the last body received from the LLM's API to the console."    ],
 			"!poll":      [(msg, ...args) =>         this.set_poll_wait(msg, ...args), "Set the polling delay in milliseconds."                            ],
@@ -489,6 +490,13 @@ const bot_prototype = {
 		this.msg_reply(msg, s);
 	},
 
+	send_manager_debug: function(msg) {
+		let s = "```\n" +
+		`Manager queue:   ${manager.status()}\n` +
+		"```";
+		this.msg_reply(msg, s);
+	},
+
 	send_cost: function(msg) {
 		let s = "```\n" +
 		`I/O:             ${this.sent_tokens} tokens (input) + ${this.received_tokens} tokens (output)\n` +
@@ -637,7 +645,7 @@ const bot_prototype = {
 		let last;											// We need this variable at different places in the chain.
 		let sent_tokens_estimate;							// We need this variable at different places in the chain.
 
-		return manager.request().then(() => {
+		return manager.request(this.conn.user.tag).then(() => {
 
 			// Who knows what could happen between asking for permission and getting it...
 
