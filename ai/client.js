@@ -28,20 +28,22 @@ function new_client(cfg) {
 		}
 	}
 
+	// ASAP, lets make client.config a deep copy with this crude but effective method...
+
+	client.config = JSON.parse(JSON.stringify(tmp_config));
+
 	// Various things, if unset, get some sort of default value or value copied from another field.
 	// Do these things in the right order...!
-	if (!tmp_config.name) {
-		tmp_config.name = tmp_config.full_name ? tmp_config.full_name : tmp_config.model;
-	}
-	if (!tmp_config.full_name) {
-		tmp_config.full_name = tmp_config.name;
-	}
-	if (!tmp_config.company) {
-		tmp_config.company = "Unknown Company";
-	}
 
-	// Lets make client.config a deep copy with this crude but effective method...
-	client.config = JSON.parse(JSON.stringify(tmp_config));
+	if (!client.config.name) {
+		client.config.name = client.config.full_name ? client.config.full_name : client.config.model;
+	}
+	if (!client.config.full_name) {
+		client.config.full_name = client.config.name;
+	}
+	if (!client.config.company) {
+		client.config.company = "Unknown Company";
+	}
 
 	let api_key = "unset";								// Closure technique to keep api_key secret.
 	client.get_api_key = () => api_key;
