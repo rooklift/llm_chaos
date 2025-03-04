@@ -642,10 +642,17 @@ const bot_prototype = {
 		this.cancelled = false;
 		this.ai_abortcontroller = new AbortController();
 
-		let last;											// We need this variable at different places in the chain.
-		let sent_tokens_estimate;							// We need this variable at different places in the chain.
+		// Certain variables are assigned values inside the promise chain but needed in a different scope, so declare them here:
 
-		return manager.request(this.conn.user.tag).then(() => {
+		let last;
+		let manager_lock_id;
+		let sent_tokens_estimate;
+
+		return manager.request(this.conn.user.tag).then((lock_id) => {
+
+			manager_lock_id = lock_id;
+
+		}).then(() => {
 
 			// Who knows what could happen between asking for permission and getting it...
 
@@ -750,7 +757,7 @@ const bot_prototype = {
 
 		}).finally(() => {
 
-			manager.release();
+			manager.release(manager_lock_id);
 			this.in_flight = false;
 			this.ai_abortcontroller = null;
 
