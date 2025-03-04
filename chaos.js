@@ -128,7 +128,7 @@ const bot_prototype = {
 				channel: null,															// The actual channel object, hopefully safe to store?
 				in_flight: false,														// http request in progress to LLM? (Only to LLM now.)
 				ai_abortcontroller: null,												// AbortController for cancelling LLM requests only.
-				cancelled: false,														// Assume this can be true even if nothing in-flight!
+				abort_count: 0,															//
 				last_msg: null,															// Last message received. Purely for emoji reactions.
 				last_handled: BigInt(-1),												// Snowflake (as BigInt) of the last thing we responsed to.
 
@@ -312,9 +312,13 @@ const bot_prototype = {
 
 	process_msg_with_attachments: function(msg) {
 
+		let abort_count = this.abort_count;
 		let all_fetches = attachment_fetches(msg);			// See that function for the format of the resolved values.
 
 		Promise.allSettled(all_fetches).then(results => {
+			if (this.abort_count > abort_count) {
+				return;
+			}
 			if (msg.content.trim()) {
 				this.add_base_message_to_history(msg);		// Now's a good time to add the main msg to the history.
 			}
@@ -325,8 +329,7 @@ const bot_prototype = {
 					this.log(result.reason);
 				}
 			}
-		}).then(() => {
-			if (msg_from_human(msg) && this.msg_mentions_me(msg)) {			// Try to respond instantly if it's a human ping.
+			if (msg_from_human(msg) && this.msg_mentions_me(msg)) {		// Try to respond instantly if it's a human ping.
 				this.maybe_respond();
 			}
 		});
@@ -453,7 +456,7 @@ const bot_prototype = {
 			this.ai_abortcontroller.abort(new ai.AbortError());
 			this.ai_abortcontroller = null;
 		}
-		this.cancelled = true;									// This relies on it being safe for this randomly to be true. It should be.
+		this.abort_count++;
 		if (msg) {
 			this.last_handled = BigInt(msg.id) - BigInt(1);		// Prevent earlier messages being responded to; but not this message itself!
 		}
@@ -645,8 +648,9 @@ const bot_prototype = {
 		// in the history, since we see up to that point.
 
 		this.in_flight = true;
-		this.cancelled = false;
 		this.ai_abortcontroller = new AbortController();
+
+		let abort_count = this.abort_count;
 
 		// Certain variables are assigned values inside the promise chain but needed in a different scope, so declare them here:
 
@@ -662,7 +666,7 @@ const bot_prototype = {
 
 			// Who knows what could happen between asking for permission and getting it...
 
-			if (!this.channel || this.cancelled || this.history.length === 0 || this.history[this.history.length - 1].from_me) {
+			if (!this.channel || this.abort_count > abort_count || this.history.length === 0 || this.history[this.history.length - 1].from_me) {
 				return null;
 			}
 
@@ -694,7 +698,7 @@ const bot_prototype = {
 
 		}).then(response => {
 
-			if (!response || !this.channel || this.cancelled) {
+			if (!response || !this.channel || this.abort_count > abort_count) {
 				if (response === "" && this.channel) {
 					this.channel.send("(Empty response generated)").catch(discord_error => {	// Not part of main promise chain.
 						console.log(discord_error);
