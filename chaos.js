@@ -1,9 +1,5 @@
 "use strict";
 
-// See https://discord.js.org
-// Note that you must enable Message Content Intent in https://discord.com/developers/applications
-// You also need to adjust Installation Settings to add "bot", "Send Messages", "Manage Messages"
-
 const ai = require("./ai");
 const discord = require("discord.js");
 const helpers = require("./chaos_helpers");
