@@ -1,17 +1,17 @@
 "use strict";
 
-exports.Required = ["model", "name", "company", "url"];
+exports.Required = ["model", "url"];
 
 // Lets just say that Defaults has every key, so we can check for wrong keys in configs...
 
 exports.Defaults = {
 
 	model: "",						// Required
-	name: "",						// Required
-	company: "",					// Required
 	url: "",						// Required
 
-	full_name: "",					// This is mostly for system prompts. If unset, is auto-set to name.
+	name: "",						// Mostly for system prompts. If unset, is auto-set to full_name (if available) or model.
+	company: "",					// Mostly for system prompts. If unset, is auto-set to "Unknown Company".
+	full_name: "",					// Mostly for system prompts. If unset, is auto-set to name.
 
 	max_tokens_key: "max_tokens",	// The key used in the data object when specifying the max tokens value; OpenAI deprecated "max_tokens"
 	sp_role: "system",				// The role for IN-ARRAY system prompt messages, typically "system" but maybe "developer" or "user"

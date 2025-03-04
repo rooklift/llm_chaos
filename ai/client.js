@@ -28,9 +28,16 @@ function new_client(cfg) {
 		}
 	}
 
-	// If unset, full_name should just be name.
+	// Various things, if unset, get some sort of default value or value copied from another field.
+	// Do these things in the right order...!
+	if (!tmp_config.name) {
+		tmp_config.name = tmp_config.full_name ? tmp_config.full_name : tmp_config.model;
+	}
 	if (!tmp_config.full_name) {
 		tmp_config.full_name = tmp_config.name;
+	}
+	if (!tmp_config.company) {
+		tmp_config.company = "Unknown Company";
 	}
 
 	// Lets make client.config a deep copy with this crude but effective method...
