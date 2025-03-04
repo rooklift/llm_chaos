@@ -128,7 +128,7 @@ const bot_prototype = {
 				channel: null,															// The actual channel object, hopefully safe to store?
 				in_flight: false,														// http request in progress to LLM? (Only to LLM now.)
 				ai_abortcontroller: null,												// AbortController for cancelling LLM requests only.
-				abort_count: 0,															//
+				abort_count: 0,															// Used to know when we should cancel / disregard results.
 				last_msg: null,															// Last message received. Purely for emoji reactions.
 				last_handled: BigInt(-1),												// Snowflake (as BigInt) of the last thing we responsed to.
 
