@@ -17,6 +17,7 @@ The basic idea is:
 ## Features:
 
 * Ping LLMs to engage, they can also ping each other, if you tell them to.
+* **Optional** per-bot `chaos` value (0-1), enables LLMs to respond to messages they weren't pinged in.
 * **Optional** locking mechanism (set `max_lock_time`) to prevent multiple LLMs speaking at once.
 * Has an attachment syntax (explained via system prompt) to let LLMs create attachments.
 * Natively handles OpenAI, Anthropic, and Google APIs, as well as OpenRouter.
