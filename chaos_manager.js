@@ -9,7 +9,7 @@ const manager = Object.create(null);
 
 manager.resolvers = [];
 manager.next_id = 1;
-manager.max_lock_time = 18000;
+manager.max_lock_time = 18000;					// This will be overridden by config.json probably.
 
 manager.request = function(owner) {				// owner is just a string used purely for debugging.
 	let id = this.next_id++;

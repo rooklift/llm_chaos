@@ -454,7 +454,7 @@ const bot_prototype = {
 			this.msg_reply(msg, `Invalid argument (current value: ${manager.max_lock_time})`);
 		} else {
 			manager.set_max_lock_time(n);
-			this.msg_reply(msg, `System-wide lock time: ${n}`);
+			this.msg_reply(msg, `System-wide max lock time: ${n}`);
 		}
 	},
 
@@ -508,6 +508,7 @@ const bot_prototype = {
 	send_manager_debug: function(msg) {
 		let s = "```\n" +
 		`Manager queue:   ${manager.status()}\n` +
+		`Max lock time:   ${manager.max_lock_time}\n` +
 		"```";
 		this.msg_reply(msg, s);
 	},
