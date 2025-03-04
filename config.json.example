@@ -22,7 +22,7 @@
 				"url": "https://api.anthropic.com/v1/messages",
 				"anthropic_version": "2023-06-01",
 				"max_tokens_key": "max_tokens",
-				"max_tokens": 8192,
+				"max_tokens": 16384,
 				"temperature": 1,
 				"budget_tokens": 3072
 			},
@@ -40,7 +40,7 @@
 				"company": "OpenAI",
 				"url": "https://api.openai.com/v1/chat/completions",
 				"max_tokens_key": "max_completion_tokens",
-				"max_tokens": 4096,
+				"max_tokens": 16384,
 				"temperature": -1,
 				"reasoning_effort": "medium",
 				"sp_role": "developer"
