@@ -672,7 +672,7 @@ const bot_prototype = {
 
 			last = this.last_msg;
 			if (last) {
-				last.react(this.emoji);
+				last.react(this.emoji).catch(error => console.error("Failed to add reaction:", error));
 			}
 
 			this.set_all_history_handled();
