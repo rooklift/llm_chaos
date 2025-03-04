@@ -13,6 +13,9 @@ manager.max_lock_time = 18000;					// This will be overridden by config.json pro
 
 manager.request = function(owner) {				// owner is just a string used purely for debugging.
 	let id = this.next_id++;
+	if (this.max_lock_time === 0) {
+		return Promise.resolve(id);				// Simple path, creates no objects, when .release(id) is called it will have no effect.
+	}
 	let promise = new Promise((resolve) => {	// Note the code here is run instantly upon creation, it's not like some .then() thing.
 		this.resolvers.push({ owner: owner, id: id, do_resolve: () => {
 			this.setup_autorelease(id);
