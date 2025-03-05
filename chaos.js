@@ -943,7 +943,6 @@ function attachment_fetches(msg) {								// Returns array of promises
 						.then(t => {
 							return {filename: a.name, text: t};	// This is the resolved object seen by add_attachment_to_history()
 						})
-						.catch(error => Promise.reject(error))
 				);
 			}
 		}
