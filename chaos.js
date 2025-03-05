@@ -696,7 +696,7 @@ const bot_prototype = {
 		let manager_lock_id;
 		let sent_tokens_estimate;
 
-		return manager.request(this.conn.user.tag).then((lock_id) => {
+		manager.request(this.conn.user.tag).then((lock_id) => {
 
 			manager_lock_id = lock_id;
 
