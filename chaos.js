@@ -109,6 +109,7 @@ const bot_prototype = {
 				end_header: cfg.end_header || common.end_header || "",					// System header to include at end of a foreign message block.
 
 				owner: common.owner,													// Name of the human in charge...
+				owner_id: common.owner_id || "",										// And their Discord ID as a string
 				chaos: cfg.chaos || common.chaos || 0,									// Chance of responding randomly to a non-ping.
 				emoji: cfg.emoji || common.emoji || "💡",								// Emoji used to acknowledge receipt of message.
 				sp_location: cfg.system_prompt || common.system_prompt || "",			// Location of the system prompt, for (re)loading.
@@ -116,7 +117,7 @@ const bot_prototype = {
 				show_reasoning: cfg.show_reasoning || common.show_reasoning || true,	// Whether thinking blocks are shown (if available).
 				history_limit: cfg.history_limit || common.history_limit || 50,			// Max history length.
 				poll_wait: cfg.poll_wait || common.poll_wait || 20000,					// Delay for maybe_respond_spinner().
-
+				restricted: cfg.restricted || false,									// Only the owner can cause a reply.
 				input_price: cfg.input_price || 0,										// Expressed as dollars per million tokens.
 				output_price: cfg.output_price || 0,									// Note that there are issues with not counting reasoning tokens.
 
@@ -221,9 +222,12 @@ const bot_prototype = {
 							console.log(error2);
 						});
 					}
-				} else {
-					this.queue.push(msg);
+					return;
 				}
+				if (this.restricted && this.msg_mentions_me(msg) && msg.author.id !== this.owner_id) {
+					this.msg_reply(msg, "Error: use of this model is restricted.");		// But it still gets added to queue.
+				}
+				this.queue.push(msg);
 			});
 
 			this.conn.login(fs.readFileSync(cfg.bot_token_file, "utf8"));
@@ -639,6 +643,9 @@ const bot_prototype = {
 			return false;
 		}
 		for (let o of this.history) {
+			if (this.restricted && o.author_id !== this.owner_id) {
+				continue;
+			}
 			if (!o.from_me && o.snow_big_int > this.last_handled && ((o.pings_me && !this.ping_blind) || Math.random() < this.chaos)) {
 				return true;
 			}
