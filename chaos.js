@@ -243,9 +243,19 @@ const bot_prototype = {
 	disconnect: function(msg) {
 		this.channel = null;
 		this.abort();
-		msg.channel.send("Leaving the server! Goodbye.").finally(() => {
-			this.conn.destroy();
+		return msg.channel.send("Leaving the server! Goodbye.").catch(error => {
+			// pass
+		}).then(() => {
+			return this.conn.destroy();
+		}).catch(error => {
+			console.log(error);
 		});
+	},
+
+	disconnect_silent: function() {
+		this.channel = null;
+		this.abort();
+		return this.conn.destroy();							// Which is a promise.
 	},
 
 	set_system_prompt: function(msg) {
@@ -967,7 +977,7 @@ const danger = `
 
 function splash() {
 	console.log();
-	console.log(`            Script date: ${helpers.format_timestamp(fs.statSync(__filename).mtime)}`);
+	console.log(`        Script modified: ${helpers.format_timestamp(fs.statSync(__filename).mtime)}`);
 	console.log(`   LLM chaos started at: ${helpers.format_timestamp(new Date())}`);
 	console.log();
 	console.log(danger.trim());
@@ -986,12 +996,23 @@ function main() {
 	check_bot_tokens(included);
 
 	let bot_promises = [];
+	let wait = 0;					// Let's be polite and not hit the API a bunch at the same time.
 
-	for (let bot_cfg of included) {
-		bot_promises.push(new_bot(bot_cfg, common));
+	process.stdout.write("\n          Starting bots:");
+
+	for (let i = 0; i < included.length; i++) {
+		let bot_cfg = included[i];
+		bot_promises.push(
+			delay(wait).then(() => {
+				process.stdout.write(` ${i + 1}`);
+				return new_bot(bot_cfg, common);
+			})
+		);
+		wait += 750;
 	}
 
 	Promise.all(bot_promises).then(arr => {
+		process.stdout.write("\n");
 		bots = arr;
 		for (let bot of bots) {
 			bot.start();			// Requires the bots array to be finalised first as the system prompt needs it.
@@ -999,5 +1020,22 @@ function main() {
 		splash();
 	});
 }
+
+function clean_exit() {
+
+	let disco_promises = bots.map(bot => bot.disconnect_silent());
+
+	Promise.allSettled(disco_promises).then(() => {
+		console.log("   All bots disconnected.\n");
+		process.exit(0);
+	});
+
+	setTimeout(() => {				// If the above takes too long...
+		process.exit(0);
+	}, 3000);
+}
+
+process.once("SIGINT", clean_exit);
+process.once("SIGTERM", clean_exit);
 
 main();
