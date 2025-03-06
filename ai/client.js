@@ -303,13 +303,12 @@ const client_prototype = {
 		try {
 			let o = this.last_receive;
 			if (this.is_anthropic()) {
-				if (!Array.isArray(o?.content)) return "";
-				let thinking_item = o.content.find(item => item?.type === "thinking");
-				return thinking_item?.thinking || "";
+				let thinking_item = o.content.find(item => item.type === "thinking");
+				return thinking_item.thinking.trim() || "";
 			} else if (this.is_openrouter()) {
-				return o?.choices?.[0]?.message?.reasoning || "";
+				return o.choices[0].message.reasoning.trim() || "";
 			}
-		} catch (error) {
+		} catch (error) {									// i.e. something was non-existant or the wrong type
 			return "";
 		}
 	},
