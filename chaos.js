@@ -747,29 +747,27 @@ const bot_prototype = {
 				this.add_own_response_to_history(response);
 			}
 
-			let chunks = [];															// Each chunk ends up being its very own Discord message.
+			let think_chunks = [];
+			let main_chunks = [];
 
-			// Add any thinking to the chunks first...
+			// Any think chunks to save?
 
 			let think = this.ai_client.get_last_think();								// think will be "" if not available.
 			if (think) {
-				if (this.show_reasoning) {
-					let think_chunks = helpers.split_text_into_chunks(think, 1970);		// Some margin of characters to add stuff.
-					for (let i = 0; i < think_chunks.length; i++) {
-						think_chunks[i] = "💭\n```\n" + think_chunks[i] + "\n```";		// 💭 at start of every chunk so other bots ignore it.
-					}
-					think_chunks[think_chunks.length - 1] += "\n⇨";						// Only at the end of the last think chunk.
-					chunks.push(...think_chunks);
+				think_chunks = helpers.split_text_into_chunks(think, 1970);				// Some margin of characters to add stuff.
+				for (let i = 0; i < think_chunks.length; i++) {
+					think_chunks[i] = "💭\n```\n" + think_chunks[i] + "\n```";			// 💭 at start of every chunk so other bots ignore it.
 				}
+				think_chunks[think_chunks.length - 1] += "\n⇨";							// Only at the end of the last think chunk.
 			}
 
-			// Add the main text to the chunks...
+			// Any main chunks to save? Any attachments?
 
 			let [text, attachments] = create_text_and_attachments(response);
-			let main_chunks = helpers.split_text_into_chunks(text, 1999);				// Possibly empty list [].
-			chunks.push(...main_chunks);
+			main_chunks = helpers.split_text_into_chunks(text, 1999);
 
 			// Bookkeeping for costs - get real token counts from the client...
+			// Have to do this after making the think var.
 
 			let accurate_sent_tokens = this.ai_client.get_last_input_token_count();
 			if (accurate_sent_tokens) {
@@ -783,11 +781,17 @@ const bot_prototype = {
 				this.received_tokens += Math.floor((think.length + response.length) / CHAR_TOKEN_RATIO);
 			}
 
-			if (chunks.length === 0 && attachments.length === 0) {
-				// We have nothing at all.
+			// Finalise our actual chunks which we are actually sending...
+
+			let chunks = [];
+			if (this.show_reasoning) {
+				chunks.push(...think_chunks);
+			}
+			chunks.push(...main_chunks);
+
+			if (think_chunks.length === 0 && main_chunks.length === 0 && attachments.length === 0) {
 				chunks.push("(Middleware received no data)");
-			} else if (chunks.length > 0 && attachments.length === 0 && main_chunks.length === 0) {
-				// We have thinking but no main content.
+			} else if (think_chunks.length > 0 && main_chunks.length === 0 && attachments.length === 0) {
 				chunks.push("(Middleware received only thinking)");
 			}
 
