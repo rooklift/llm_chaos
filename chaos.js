@@ -736,14 +736,11 @@ const bot_prototype = {
 
 		}).then(response => {
 
-			if (!response || !this.channel || this.abort_count > abort_count) {
-				if (response === "" && this.channel) {
-					this.channel.send("(Empty response generated)").catch(discord_error => {	// Not part of main promise chain.
-						console.log(discord_error);
-					});
-				}
+			if (typeof response !== "string" || !this.channel || this.abort_count > abort_count) {
 				return null;
 			}
+
+			if (response === "") response = ".";										// Uh?
 
 			response = helpers.normalize_linebreaks(response);							// Llama Base confused me once with \r
 			this.add_own_response_to_history(response);
