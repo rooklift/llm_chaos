@@ -790,7 +790,7 @@ const bot_prototype = {
 			chunks.push(...main_chunks);
 
 			if (think_chunks.length === 0 && main_chunks.length === 0 && attachments.length === 0) {
-				chunks.push("(Middleware received no data)");
+				chunks.push("(Middleware received no thinking, no response, and no attachments)");
 			} else if (think_chunks.length > 0 && main_chunks.length === 0 && attachments.length === 0) {
 				chunks.push("(Middleware received only thinking)");
 			}
