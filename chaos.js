@@ -740,7 +740,7 @@ const bot_prototype = {
 				return null;
 			}
 
-			if (response === "") response = ".";										// Uh?
+			if (response === "") response = "...";										// Can't just return null, because there might be thinking.
 
 			response = helpers.normalize_linebreaks(response);							// Llama Base confused me once with \r
 			this.add_own_response_to_history(response);
