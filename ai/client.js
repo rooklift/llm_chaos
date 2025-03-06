@@ -405,7 +405,7 @@ const client_prototype = {
 			} else {
 				return response.json().then(data => {
 					this.last_receive = data;
-					return this.parse_200_response(data);
+					return this.parse_200_response(data).trim();
 				}).then(result => {						// result is a string.
 					this.register_success();
 					return result;						// Thus the overall promise resolves to a string.
