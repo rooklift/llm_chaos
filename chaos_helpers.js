@@ -46,6 +46,12 @@ exports.fetcher = function(url, options = {}) {
 exports.split_text_into_chunks = function(text, maxlen) {			// Written by Claude.
 
 	text = text.replace(/\n(?:\s*\n)+/g, "\n\n");
+	text = text.trim();
+
+	// If empty, return empty
+	if (text.length === 0) {
+		return [];
+	}
 
 	// If text is short enough, just return it
 	if (text.length <= maxlen) {
@@ -93,8 +99,7 @@ exports.split_text_into_chunks = function(text, maxlen) {			// Written by Claude
 		chunks.push(current_chunk);
 	}
 
-	// Ensure we return at least one chunk
-	return chunks.length > 0 ? chunks : [""];
+	return chunks.map(s => s.trim()).filter(s => s !== "");
 };
 
 exports.split_paragraph = function(paragraph, maxlen) {			// Written by Claude.
