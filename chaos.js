@@ -113,7 +113,7 @@ const bot_prototype = {
 				top_header: cfg.top_header ?? common.top_header ?? "",					// System header to include at start of a foreign message block.
 				end_header: cfg.end_header ?? common.end_header ?? "",					// System header to include at end of a foreign message block.
 
-				owner: common.owner,													// Name of the human in charge...
+				owner: common.owner,													// Human in charge, for S.P. (use owner_id for important stuff)
 				owner_id: common.owner_id ?? "",										// And their Discord ID as a string
 				chaos: cfg.chaos ?? common.chaos ?? 0,									// Chance of responding randomly to a non-ping.
 				emoji: cfg.emoji ?? common.emoji ?? "💡",								// Emoji used to acknowledge receipt of message.
