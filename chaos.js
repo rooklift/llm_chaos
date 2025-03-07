@@ -14,7 +14,11 @@ const STEGANOGRAPHY_PREFIXES = ["💭"];		// Any message starting with one of th
 const CHAR_TOKEN_RATIO = 3.6;				// For token estimates and cost estimates.
 const DEFAULT_BUDGET = 50;					// Won't do anything if prices aren't accurately set in the config.
 
+// ------------------------------------------------------------------------------------------------
+
 let bots = [];
+let budget = 0;
+let ever_sent_budget_error = false;
 
 // ------------------------------------------------------------------------------------------------
 // History objects storing only essential info out of a discord message, needed by the LLMs.
@@ -106,8 +110,6 @@ const bot_prototype = {
 				ai_client: null,														// Connection to the LLM via the ai library.
 				conn: null,																// Connection to Discord.
 
-				budget: common.budget ?? DEFAULT_BUDGET,								// System-wide budget constraint. Needs accurate prices in config.
-
 				top_header: cfg.top_header ?? common.top_header ?? "",					// System header to include at start of a foreign message block.
 				end_header: cfg.end_header ?? common.end_header ?? "",					// System header to include at end of a foreign message block.
 
@@ -151,13 +153,6 @@ const bot_prototype = {
 			this.conn.on("ready", () => {
 				resolve(this);						// The promise returned by init() is resolved when the Discord connection is "ready"
 			});
-
-			if (typeof common.max_lock_time === "number") {
-				manager.set_max_lock_time(common.max_lock_time);
-			}
-			if (typeof common.lock_buffer_time === "number") {
-				manager.set_lock_buffer_time(common.lock_buffer_time);
-			}
 
 			let commands = {	// Note that the first arg received by all of these will be msg. Then any other args (which most don't use).
 			"!abort":     [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !break."                                                 ],
@@ -646,6 +641,15 @@ const bot_prototype = {
 	},
 
 	can_respond: function() {
+		if (system_wide_cost() > budget) {
+			if (!ever_sent_budget_error && this.channel) {
+				ever_sent_budget_error = true;
+				this.channel.send("Budget exceeded!").catch(error => {
+					console.log(error);
+				});
+			}
+			return false;
+		}
 		if (!this.channel || this.in_flight) {
 			return false;
 		}
@@ -678,16 +682,6 @@ const bot_prototype = {
 	},
 
 	respond: function() {
-
-		if (system_wide_cost() > this.budget) {
-			if (this.channel) {
-				this.channel.send("Budget exceeded!").catch(error => {
-					console.log(error);
-				});
-			}
-			this.disconnect();
-			return;
-		}
 
 		// Regardless of what actually triggered the response, it's reasonable to consider us as reacting to the last message
 		// in the history, since we see up to that point.
@@ -1027,10 +1021,20 @@ function main() {
 	let config = JSON.parse(fs.readFileSync(CONFIG_FILE));
 	let common = config.common;
 
+	// Set certain global config stuff...
+
+	if (typeof common.max_lock_time === "number") {
+		manager.set_max_lock_time(common.max_lock_time);
+	}
+	if (typeof common.lock_buffer_time === "number") {
+		manager.set_lock_buffer_time(common.lock_buffer_time);
+	}
+	budget = common.budget ?? DEFAULT_BUDGET;		// System-wide budget constraint. Needs accurate prices in config.
+
+	// And start the bots...
+
 	let included = config.known.filter(o => !Array.isArray(config.disabled) || !config.disabled.includes(o.ai_config.model));
-
 	check_bot_tokens(included);
-
 	let bot_promises = [];
 
 	process.stdout.write("\n          Starting bots:");
