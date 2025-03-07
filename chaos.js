@@ -184,19 +184,19 @@ const bot_prototype = {
 			"!tokens":    [(msg, ...args) =>        this.set_max_tokens(msg, ...args), "Set max_tokens for the LLM."                                       ],
 			};
 
-			let commands_that_can_be_sent_untargeted = ["!abort", "!break", "!reset"];		// Note that these aren't allowed to have arguments.
-			let hidden_commands = ["!abort", "!budget", "!costs"];							// Won't show up in help.
+			let broadcast_commands = ["!abort", "!break", "!reset"];		// Commands that can be sent untargetted.
+			let hidden_commands = ["!abort", "!budget", "!costs"];			// Commands that won't show up in help. (Aliases.)
 
 			let help = (msg) => {
 				let st = ["```\nNormal commands - ping the LLM:\n"];
 				for (let [key, value] of Object.entries(commands)) {
-					if (!commands_that_can_be_sent_untargeted.includes(key) && !hidden_commands.includes(key)) {
+					if (!broadcast_commands.includes(key) && !hidden_commands.includes(key)) {
 						st.push(`  ${key.padEnd(14)} ${value[1].toString()}`);
 					}
 				}
 				st.push("\nChannel commands - can optionally send without ping, to affect every LLM:\n");
 				for (let [key, value] of Object.entries(commands)) {
-					if (commands_that_can_be_sent_untargeted.includes(key) && !hidden_commands.includes(key)) {
+					if (broadcast_commands.includes(key) && !hidden_commands.includes(key)) {
 						st.push(`  ${key.padEnd(14)} ${value[1].toString()}`);
 					}
 				}
@@ -213,15 +213,20 @@ const bot_prototype = {
 						return;
 					}
 				}
-				let {cmd, args} = this.cmd_from_msg(msg, commands_that_can_be_sent_untargeted);
-				if (Object.hasOwn(commands, cmd)) {
-					try {
-						commands[cmd][0](msg, ...args);
-					} catch (error) {
-						msg.channel.send(`Immediate exception: ${error}`).catch(error2 => {
-							console.log(error2);
-						});
+				let {cmd, args} = this.cmd_from_msg(msg);
+				if (this.msg_mentions_me(msg) || (broadcast_commands.includes(cmd) && !this.msg_mentions_others(msg))) {
+					if (Object.hasOwn(commands, cmd)) {
+						try {
+							commands[cmd][0](msg, ...args);
+						} catch (error) {
+							msg.channel.send(`Immediate exception: ${error}`).catch(error2 => {
+								console.log(error2);
+							});
+						}
+						return;
 					}
+				}
+				if (cmd === "!private" && !this.msg_mentions_me(msg)) {
 					return;
 				}
 				if (this.restricted && this.msg_mentions_me(msg) && msg.author.id !== this.owner_id) {
@@ -571,20 +576,16 @@ const bot_prototype = {
 		return msg.mentions.users.has(this.conn.user.id);							// @everyone nor @role mentions.
 	},
 
-	cmd_from_msg: function(msg, untargeted) {
+	msg_mentions_others: function(msg) {
+		return msg.mentions.users.size >= 2 || (msg.mentions.users.size === 1 && !this.msg_mentions_me(msg));
+	},
+
+	cmd_from_msg: function(msg) {
 		let default_result = {cmd: "", args: []};
-		if (msg.content.length > 256) {												// Will I regret this later somehow?
-			return default_result;
-		}
-		for (let cmd_to_all of untargeted) {										// Commands like !break and !reset that don't need a ping
-			if (msg.content.trim() === cmd_to_all) {
-				return {cmd: cmd_to_all, args: []};
-			}
-		}
-		if (!this.msg_mentions_me(msg)) {
-			return default_result;
-		}
 		let content = msg.content.replace(/<@!?\d+>/g, " ");						// Purge all pings. <@12345> and <@!12345> formats.
+		if (msg.content.length > 256) {
+			return default_result;
+		}
 		let parts = content.split(" ").map(s => s.trim()).filter(z => z !== "");
 		if (parts.length > 0 && parts[0].startsWith("!")) {
 			let cmd = parts[0];
