@@ -158,7 +158,7 @@ const bot_prototype = {
 			"!abort":     [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !break."                                                 ],
 			"!blind":     [(msg, ...args) =>         this.set_blindness(msg, ...args), "Set / toggle being ping-blind."                                    ],
 			"!break":     [(msg, ...args) =>                 this.abort(msg, ...args), "Abort current operation. Bump last_handled marker."                ],
-			"!budget":    [(msg, ...args) =>  this.set_reasoning_effort(msg, ...args), "Alias for !effort."                                                ],
+			"!budget":    [(msg, ...args) =>     this.set_dollar_budget(msg, ...args), "Set the budget in dollars."                                        ],
 			"!chaos":     [(msg, ...args) =>             this.set_chaos(msg, ...args), "Set chaos value (chance of responding to non-pings)."              ],
 			"!config":    [(msg, ...args) =>           this.send_config(msg, ...args), "Display LLM config in this channel."                               ],
 			"!cost":      [(msg, ...args) =>             this.send_cost(msg, ...args), "Display estimated costs in this channel."                          ],
@@ -183,7 +183,7 @@ const bot_prototype = {
 			};
 
 			let broadcast_commands = ["!abort", "!break", "!reset"];		// Commands that can be sent untargetted.
-			let hidden_commands = ["!abort", "!budget", "!costs"];			// Commands that won't show up in help. (Aliases.)
+			let hidden_commands = ["!abort", "!costs"];						// Commands that won't show up in help. (Aliases.)
 
 			let help = (msg) => {
 				let st = ["```\nNormal commands - ping the LLM:\n"];
@@ -376,6 +376,19 @@ const bot_prototype = {
 		msg.channel.send(s).catch(error => {
 			console.log(error);
 		});
+	},
+
+	set_dollar_budget: function(msg, val) {
+		let n = parseFloat(val);
+		if (msg.author.id !== this.owner_id) {
+			this.msg_reply(msg, "Unauthorised attempt to change budget!");
+		} else if (Number.isNaN(n) || n < 0) {
+			this.msg_reply(msg, `Invalid argument (current budget: $${budget.toFixed(2)})`);
+		} else {
+			budget = n;										// These are
+			ever_sent_budget_error = false;					// both globals
+			this.msg_reply(msg, `Budget: $${n.toFixed(2)} (system-wide)`);
+		}
 	},
 
 	set_blindness: function(msg, val) {
