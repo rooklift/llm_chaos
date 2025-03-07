@@ -36,7 +36,7 @@ function new_client(cfg) {
 	// Do these things in the right order...!
 
 	if (!client.config.name) {
-		client.config.name = client.config.full_name ? client.config.full_name : client.config.model;
+		client.config.name = client.config.full_name || client.config.model;
 	}
 	if (!client.config.full_name) {
 		client.config.full_name = client.config.name;
