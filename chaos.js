@@ -302,7 +302,7 @@ const bot_prototype = {
 
 	process_queue: function() {
 
-		let human_mentions_me = false;
+		let mentioned_in_simple_msg = false;
 
 		while (this.queue.length > 0) {
 			let msg = this.queue.shift();
@@ -316,27 +316,23 @@ const bot_prototype = {
 				continue;
 			}
 			if (msg.attachments.size === 0) {
-				this.process_simple_msg(msg);
+				this.add_base_message_to_history(msg);
+				if (msg_from_human(msg) && this.msg_mentions_me(msg)) {
+					mentioned_in_simple_msg = true;
+				}
 			} else {
-				this.process_msg_with_attachments(msg);
-			}
-			if (msg_from_human(msg) && this.msg_mentions_me(msg)) {
-				human_mentions_me = true;
+				this.process_msg_with_attachments(msg);		// msg not added to the history until attachments are retrieved.
 			}
 		}
 
-		if (human_mentions_me) {
-			this.maybe_respond();			// But if there were attachments, we will be in-flight and so we won't be able to respond.
+		if (mentioned_in_simple_msg) {
+			this.maybe_respond();
 		}
 	},
 
 	process_queue_spinner: function() {
 		this.process_queue();
 		setTimeout(this.process_queue_spinner.bind(this), 250);
-	},
-
-	process_simple_msg: function(msg) {
-		this.add_base_message_to_history(msg);
 	},
 
 	process_msg_with_attachments: function(msg) {
