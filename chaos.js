@@ -214,8 +214,8 @@ const bot_prototype = {
 					}
 				}
 				let {cmd, args} = this.cmd_from_msg(msg);
-				if (this.msg_mentions_me(msg) || (broadcast_commands.includes(cmd) && !this.msg_mentions_others(msg))) {
-					if (Object.hasOwn(commands, cmd)) {
+				if (Object.hasOwn(commands, cmd)) {
+					if (this.msg_mentions_me(msg) || (broadcast_commands.includes(cmd) && !this.msg_mentions_others(msg))) {
 						try {
 							commands[cmd][0](msg, ...args);
 						} catch (error) {
