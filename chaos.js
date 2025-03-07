@@ -12,6 +12,7 @@ process.chdir(__dirname);
 const CONFIG_FILE = "./config.json";
 const STEGANOGRAPHY_PREFIXES = ["💭"];		// Any message starting with one of these is ignored.
 const CHAR_TOKEN_RATIO = 3.6;				// For token estimates and cost estimates.
+const DEFAULT_BUDGET = 50;					// Won't do anything if prices aren't accurately set in the config.
 
 let bots = [];
 
@@ -104,6 +105,8 @@ const bot_prototype = {
 
 				ai_client: null,														// Connection to the LLM via the ai library.
 				conn: null,																// Connection to Discord.
+
+				budget: common.budget ?? DEFAULT_BUDGET,								// System-wide budget constraint. Needs accurate prices in config.
 
 				top_header: cfg.top_header ?? common.top_header ?? "",					// System header to include at start of a foreign message block.
 				end_header: cfg.end_header ?? common.end_header ?? "",					// System header to include at end of a foreign message block.
@@ -245,16 +248,20 @@ const bot_prototype = {
 		this.process_queue_spinner();
 	},
 
-	disconnect: function(msg) {
+	disconnect: function(msg = null) {
 		this.channel = null;
 		this.abort();
-		return msg.channel.send("Leaving the server! Goodbye.").catch(error => {
-			// pass
-		}).then(() => {
+		if (msg) {
+			return msg.channel.send("Leaving the server! Goodbye.").catch(error => {
+				// pass
+			}).then(() => {
+				return this.conn.destroy();
+			}).catch(error => {
+				console.log(error);
+			});
+		} else {
 			return this.conn.destroy();
-		}).catch(error => {
-			console.log(error);
-		});
+		}
 	},
 
 	disconnect_silent: function() {
@@ -263,7 +270,7 @@ const bot_prototype = {
 		return this.conn.destroy();							// Which is a promise.
 	},
 
-	set_system_prompt: function(msg) {
+	set_system_prompt: function(msg = null) {
 
 		if (!this.sp_location) {
 			return;											// Should we actually clear it in this case?
@@ -542,23 +549,19 @@ const bot_prototype = {
 	send_cost: function(msg) {
 		let s = "```\n" +
 		`I/O:             ${this.sent_tokens} tokens (input) + ${this.received_tokens} tokens (output)\n` +
-		`Cost:            ${this.estimated_cost()}\n` +
+		`Cost:            ${estimated_cost_string(this.estimated_cost())}\n` +
+		`All bots cost:   ${estimated_cost_string(system_wide_cost())}\n` +
 		"```";
 		this.msg_reply(msg, s);
 	},
 
 	estimated_cost: function() {
 		if (!this.input_price || !this.output_price) {
-			return "Prices unknown!";
+			return -1;
 		}
 		let i_cost = this.sent_tokens * this.input_price / 1000000;
 		let o_cost = this.received_tokens * this.output_price / 1000000;
-		let s = (i_cost + o_cost).toFixed(4);
-		let dot_index = s.indexOf(".");
-		while (s.endsWith("0") && s.length - dot_index > 3) {
-			s = s.slice(0, -1);
-		}
-		return "$" + s;
+		return i_cost + o_cost;
 	},
 
 	msg_is_mine: function(msg) {
@@ -675,6 +678,16 @@ const bot_prototype = {
 	},
 
 	respond: function() {
+
+		if (system_wide_cost() > this.budget) {
+			if (this.channel) {
+				this.channel.send("Budget exceeded!").catch(error => {
+					console.log(error);
+				});
+			}
+			this.disconnect();
+			return;
+		}
 
 		// Regardless of what actually triggered the response, it's reasonable to consider us as reacting to the last message
 		// in the history, since we see up to that point.
@@ -954,6 +967,24 @@ function attachment_fetches(msg) {								// Returns array of promises
 		}
 	}
 	return ret;
+}
+
+function system_wide_cost() {
+	let costs = bots.map(b => b.estimated_cost()).filter(n => n > 0);
+	let total = costs.reduce((sum, c) => sum + c, 0);
+	return total;
+}
+
+function estimated_cost_string(cost) {
+	if (cost < 0) {
+		return "Unknown prices!";
+	}
+	let s = cost.toFixed(4);
+	let dot_index = s.indexOf(".");
+	while (s.endsWith("0") && s.length - dot_index > 3) {
+		s = s.slice(0, -1);
+	}
+	return "$" + s;
 }
 
 function delay(ms) {
