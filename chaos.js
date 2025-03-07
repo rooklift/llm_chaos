@@ -1005,19 +1005,17 @@ function main() {
 	check_bot_tokens(included);
 
 	let bot_promises = [];
-	let wait = 0;					// Let's be polite and not hit the API a bunch at the same time.
 
 	process.stdout.write("\n          Starting bots:");
 
 	for (let i = 0; i < included.length; i++) {
 		let bot_cfg = included[i];
 		bot_promises.push(
-			delay(wait).then(() => {
+			delay(i * 750).then(() => {				// Let's be polite and not hit the API a bunch at the same time.
 				process.stdout.write(` ${i + 1}`);
 				return new_bot(bot_cfg, common);
 			})
 		);
-		wait += 750;
 	}
 
 	Promise.all(bot_promises).then(arr => {
