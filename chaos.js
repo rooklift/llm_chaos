@@ -557,8 +557,9 @@ const bot_prototype = {
 	send_cost: function(msg) {
 		let s = "```\n" +
 		`I/O:             ${this.sent_tokens} tokens (input) + ${this.received_tokens} tokens (output)\n` +
-		`Cost:            ${estimated_cost_string(this.estimated_cost())}\n` +
-		`All bots cost:   ${estimated_cost_string(system_wide_cost())}\n` +
+		`Cost:            ${money_string(this.estimated_cost())}\n` +
+		`All bots cost:   ${money_string(system_wide_cost())}\n` +
+		`Budget:          ${money_string(budget)}\n` +
 		"```";
 		this.msg_reply(msg, s);
 	},
@@ -982,9 +983,9 @@ function system_wide_cost() {
 	return total;
 }
 
-function estimated_cost_string(cost) {
+function money_string(cost) {		// With the special case that unknown values are sent as negative.
 	if (cost < 0) {
-		return "Unknown prices!";
+		return "Unknown!";
 	}
 	let s = cost.toFixed(4);
 	let dot_index = s.indexOf(".");
