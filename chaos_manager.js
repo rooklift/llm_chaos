@@ -18,10 +18,14 @@ manager.request = function(owner) {				// owner is just a string used purely for
 		return Promise.resolve(id);				// Simple path, creates no objects, when .release(id) is called it will have no effect.
 	}
 	let promise = new Promise((resolve) => {	// Note the code here is run instantly upon creation, it's not like some .then() thing.
-		this.resolvers.push({ owner: owner, id: id, do_resolve: () => {
-			this.setup_autorelease(id);
-			resolve(id);
-		}});
+		this.resolvers.push({
+			owner: owner,
+			id: id,
+			do_resolve: () => {
+				this.setup_autorelease(id);
+				resolve(id);
+			}
+		});
 	});
 	if (this.resolvers.length === 1) {			// The new promise is the only one, so we can resolve it.
 		this.resolvers[0].do_resolve();
