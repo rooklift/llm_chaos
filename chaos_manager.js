@@ -45,12 +45,15 @@ manager.setup_autorelease = function(id) {
 
 manager.release = function(id) {
 
-	if (this.resolvers[0]?.id !== id) {
+	let was_in_zeroth_index = this.resolvers[0]?.id === id;
+
+	this.resolvers = this.resolvers.filter(o => o.id !== id);
+
+	if (!was_in_zeroth_index) {		// Clearing any other position has no other effect.
 		return;
 	}
 
-	this.resolvers.shift();
-
+	// If we're here, we discarded the zeroth lock.
 	// We can now resolve another promise (i.e. unlock the next lock).
 	// But wait a bit, so the new bot MIGHT receive the last message.
 
@@ -58,10 +61,9 @@ manager.release = function(id) {
 
 	if (active_id) {
 		setTimeout(() => {
-			if (this.resolvers[0]?.id !== active_id) {
-				return;
+			if (this.resolvers[0]?.id === active_id) {
+				this.resolvers[0].do_resolve();
 			}
-			this.resolvers[0].do_resolve();
 		}, this.lock_buffer_time);
 	}
 };
