@@ -24,7 +24,7 @@ let ever_sent_budget_error = false;
 // History objects storing only essential info out of a discord message, needed by the LLMs.
 
 function new_history_object(opts) {
-	let required = ["snow_big_int", "author_tag", "author_id", "author_type", "from_me", "pings_me", "text", "filename"];
+	let required = ["snow_big_int", "author_name", "author_id", "author_type", "from_me", "pings_me", "text", "filename"];
 	for (let field of required) {
 		if (!Object.hasOwn(opts, field)) {
 			throw new Error(`new_history_object: missing required field: ${field}`);
@@ -60,11 +60,11 @@ const history_object_prototype = {
 };
 
 function normal_system_header(o) {
-	return `### Message from ${o.author_tag} (${o.author_type}, userid ${o.author_id}):\n`;
+	return `### Message from ${o.author_name} (${o.author_type}, userid ${o.author_id}):\n`;
 }
 
 function attachment_system_header(o) {
-	return `### File attached by ${o.author_tag} (${o.author_type}, userid ${o.author_id}):\n`;
+	return `### File attached by ${o.author_name} (${o.author_type}, userid ${o.author_id}):\n`;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -276,7 +276,7 @@ const bot_prototype = {
 		for (let bot of bots) {
 
 			let company = bot.ai_client.config.company;
-			let tag = bot.conn.user.tag;
+			let dname = bot.conn.user.displayName;
 			let id = bot.conn.user.id;
 
 			let special = [];
@@ -284,13 +284,13 @@ const bot_prototype = {
 			if (bot.ping_blind) special.push("ping-blind");
 			let special_string = special.length ? `  <-- special flags: ${special.join(", ")}` : "";
 
-			all_llm_info.push(`${bot.ai_client.config.full_name} created by ${company}, username ${tag} -- ping with <@${id}>${special_string}`);
+			all_llm_info.push(`${bot.ai_client.config.full_name} created by ${company}, username ${dname} -- ping with <@${id}>${special_string}`);
 		}
 
-		let system_header_example = normal_system_header({author_tag: "exampleuser", author_type: "human", author_id: "1234567890"}).trim();
+		let system_header_example = normal_system_header({author_name: "exampleuser", author_type: "human", author_id: "1234567890"}).trim();
 
 		this.ai_client.set_system_prompt_from_file(this.sp_location);
-		this.ai_client.replace_in_system_prompt("{{userName}}", this.conn.user.tag, true);
+		this.ai_client.replace_in_system_prompt("{{userName}}", this.conn.user.displayName, true);
 		this.ai_client.replace_in_system_prompt("{{userId}}", this.conn.user.id, true);
 		this.ai_client.replace_in_system_prompt("{{systemHeaderExample}}", system_header_example, true);
 		this.ai_client.replace_in_system_prompt("{{modelsInTheServer}}", all_llm_info.join("\n"), true);
@@ -363,7 +363,7 @@ const bot_prototype = {
 	},
 
 	log: function(...args) {
-		console.log(this.conn.user.tag, ...args);			// Seems to work even if args is length 0.
+		console.log(this.conn.user.displayName, ...args);	// Seems to work even if args is length 0.
 	},
 
 	reset: function(msg) {
@@ -603,7 +603,7 @@ const bot_prototype = {
 	add_base_message_to_history: function(msg) {			// i.e. for the simple content of a message, not looking for attachments.
 		let o = new_history_object({
 			snow_big_int: BigInt(msg.id),
-			author_tag:   msg.author.tag,
+			author_name:  msg.author.displayName,
 			author_id:    msg.author.id,
 			author_type:  user_type_from_msg(msg),
 			from_me:      this.msg_is_mine(msg),
@@ -622,7 +622,7 @@ const bot_prototype = {
 	add_attachment_to_history: function(msg, settled) {		// See attachment_fetches() for the format of "settled".
 		let o = new_history_object({
 			snow_big_int: BigInt(msg.id),
-			author_tag:   msg.author.tag,
+			author_name:  msg.author.displayName,
 			author_id:    msg.author.id,
 			author_type:  user_type_from_msg(msg),
 			from_me:      this.msg_is_mine(msg),
@@ -641,7 +641,7 @@ const bot_prototype = {
 	add_own_response_to_history: function(s) {				// Just add the raw AI output to the history.
 		let o = new_history_object({
 			snow_big_int: BigInt(-1),
-			author_tag:   this.conn.user.tag,
+			author_name:  this.conn.user.displayName,
 			author_id:    this.conn.user.id,
 			author_type:  "AI",
 			from_me:      true,
@@ -711,7 +711,7 @@ const bot_prototype = {
 		let manager_lock_id;
 		let sent_tokens_estimate;
 
-		manager.request(this.conn.user.tag).then((lock_id) => {
+		manager.request(this.conn.user.displayName).then((lock_id) => {
 
 			manager_lock_id = lock_id;
 
@@ -926,7 +926,7 @@ const bot_prototype = {
 
 	dump_history: function() {								// Prints the array more-or-less as it will be seen by the AI.
 		console.log("-".repeat(100));
-		console.log(helpers.centre_string(`HISTORY OF ${this.conn.user.tag}`, 100));
+		console.log(helpers.centre_string(`HISTORY OF ${this.conn.user.displayName}`, 100));
 		console.log("-".repeat(100));
 		let foo = this.format_history();					// Note that while sending it to the Discord itself might be tempting,
 		for (let s of foo) {								// it would be visible to other bots and add tokens (and thus cost).
