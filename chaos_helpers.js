@@ -2,48 +2,38 @@
 
 // ------------------------------------------------------------------------------------------------
 // Fetcher - to avoid multiple fetches by the bots... written by Claude, mostly...
+// This is maybe the 3rd, simplest version of this.
 
-let fetcher_cache = Object.create(null);			// Holds fetch response objects
-let fetcher_in_progress = Object.create(null);		// Holds fetch promises
+let fetcher_promises = Object.create(null);			// Holds only promises.
 
-// Remember multiple callers may get the same promise, which will resolve to
-// the same response unless we do something about it. What we need to do is
-// ensure each return out of this function adds a .then() which clones it.
+// Remember multiple callers may get the same promise, which will resolve to the same response
+// unless we do something about it. What we need to do is ensure each return out of this function
+// (thankfully there's just one return now) adds a .then() which clones it.
 
-exports.fetcher = function(url, options = {}) {
-
-	// Must always return a promise.
+exports.fetcher = function(url, options = {}) {		// Must always return a promise.
 
 	if (typeof url !== "string") {
 		throw new Error("fetcher: expected string");
 	}
 
-	if (Object.hasOwn(fetcher_cache, url)) {
-		return Promise.resolve(fetcher_cache[url]).then(response => response.clone());
-	}
+	if (!Object.hasOwn(fetcher_promises, url)) {
 
-	if (Object.hasOwn(fetcher_in_progress, url)) {
-		return fetcher_in_progress[url].then(response => response.clone());
-	}
+		fetcher_promises[url] = fetch(url, options).then(response => {
 
-	let fetch_promise = fetch(url, options).then(response => {
-		if (!response.ok) {
-			throw new Error(`HTTP error! status: ${response.status}`);
-		}
-		fetcher_cache[url] = response;
-		return response;
-	}).finally(() => {
-		delete fetcher_in_progress[url];
-		if (fetcher_cache[url]) {									// If we succeeded...
+			if (!response.ok) {
+				delete fetcher_promises[url];
+				throw new Error(`HTTP error! status: ${response.status}`);
+			}
+
 			setTimeout(() => {
-				delete fetcher_cache[url];
-			}, 300000);												// Remove from cache after 5 minutes.
-		}
-	});
+				delete fetcher_promises[url];
+			}, 300000);								// Remove from cache after 5 minutes
 
-	fetcher_in_progress[url] = fetch_promise;
+			return response;
+		});
+	}
 
-	return fetch_promise.then(response => response.clone());
+	return fetcher_promises[url].then(response => response.clone());
 };
 
 // ------------------------------------------------------------------------------------------------
@@ -190,13 +180,13 @@ exports.centre_string = function(s, width) {
 };
 
 exports.format_timestamp = function(date) {
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const seconds = String(date.getSeconds()).padStart(2, "0");
-    const month = date.toLocaleString("en-GB", { month: "short" });
-    const day = String(date.getDate()).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${hours}:${minutes}:${seconds} on ${month} ${day}, ${year}`;
+	const hours = String(date.getHours()).padStart(2, "0");
+	const minutes = String(date.getMinutes()).padStart(2, "0");
+	const seconds = String(date.getSeconds()).padStart(2, "0");
+	const month = date.toLocaleString("en-GB", { month: "short" });
+	const day = String(date.getDate()).padStart(2, "0");
+	const year = date.getFullYear();
+	return `${hours}:${minutes}:${seconds} on ${month} ${day}, ${year}`;
 };
 
 exports.date_from_snowflake = function(snowflake) {		// Unused but good to have.
