@@ -8,7 +8,10 @@
 		"history_limit": 50,
 		"poll_wait": 20000,
 		"max_lock_time": 18000,
-		"lock_buffer_time": 1000
+		"lock_buffer_time": 1000,
+		"top_header": "### New messages received!",
+		"end_header": "### End of new messages. You can reply!",
+		"budget": 10
 	},
 	"known": [
 		{
@@ -49,6 +52,5 @@
 			"input_price": 1.10,
 			"output_price": 4.40
 		}
-	],
-	"disabled": []
+	]
 }
