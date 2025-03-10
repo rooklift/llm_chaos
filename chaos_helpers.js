@@ -34,6 +34,11 @@ exports.fetcher = function(url, options = {}) {
 		return response;
 	}).finally(() => {
 		delete fetcher_in_progress[url];
+		if (fetcher_cache[url]) {									// If we succeeded...
+			setTimeout(() => {
+				delete fetcher_cache[url];
+			}, 300000);												// Remove from cache after 5 minutes.
+		}
 	});
 
 	fetcher_in_progress[url] = fetch_promise;
