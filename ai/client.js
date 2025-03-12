@@ -146,6 +146,10 @@ const client_prototype = {
 		return this.config.url.toUpperCase().includes("OPENROUTER");
 	},
 
+	is_openai: function() {
+		return this.config.url.toUpperCase().includes("OPENAI");
+	},
+
 	handle_429: function(response) {
 		let retry_header = response.headers.get("retry-after");		// .get() works in a case-insensitive way
 		if (retry_header) {
@@ -195,11 +199,47 @@ const client_prototype = {
 
 		let data = {
 			model: this.config.model,
-			messages: formatted_conversation,
+			input: formatted_conversation,
 			[this.config.max_tokens_key]: this.config.max_tokens,
 		};
 
 		if (this.config.system_prompt) {				// For OpenAI, System prompt is first message.
+			data.input.unshift({
+				role: this.config.sp_role,
+				content: this.config.system_prompt
+			});
+			if (this.config.sp_role === "user") {		// If it's a "user" message, add a simple reply to keep [user, assistant] pattern.
+				data.input.splice(1, 0, {
+					role: "assistant",
+					content: "OK, I understood these instructions and I am ready to proceed!"
+				});
+			}
+		}
+
+		if (this.config.temperature >= 0) {
+			data.temperature = this.config.temperature;
+		}
+
+		if (this.config.reasoning_effort) {
+			data.reasoning = {effort: this.config.reasoning_effort};
+		}
+
+		return [headers, data];
+	},
+
+	openrouter_request: function(formatted_conversation) {
+		let headers = {
+			"authorization": `Bearer ${this.get_api_key()}`,
+			"content-type": "application/json",
+		};
+
+		let data = {
+			model: this.config.model,
+			messages: formatted_conversation,
+			[this.config.max_tokens_key]: this.config.max_tokens,
+		};
+
+		if (this.config.system_prompt) {				// System prompt is first message.
 			data.messages.unshift({
 				role: this.config.sp_role,
 				content: this.config.system_prompt
@@ -217,21 +257,16 @@ const client_prototype = {
 		}
 
 		if (this.config.reasoning_effort) {
-			data.reasoning_effort = this.config.reasoning_effort;
+			data.reasoning = {effort: this.config.reasoning_effort};
 		}
 
-		return [headers, data];
-	},
-
-	openrouter_request: function(formatted_conversation) {
-		let [headers, data] = this.openai_request(formatted_conversation);
-		data["include_reasoning"] = true;
 		if (Array.isArray(this.config.openrouter_order) && this.config.openrouter_order.length > 0) {
-			data["provider"] = {
-				"order": this.config.openrouter_order,
-				"allow_fallbacks": false,
+			data.provider = {
+				order: this.config.openrouter_order,
+				allow_fallbacks: false,
 			};
 		}
+
 		return [headers, data];
 	},
 
@@ -264,13 +299,13 @@ const client_prototype = {
 	get_handlers: function() {
 
 		if (this.is_openrouter()) return {
-			formatter: utils.format_message_array_openai,
+			formatter: utils.format_message_array_standard,
 			maker:     this.openrouter_request.bind(this),
-			parser:    utils.parse_200_response_openai
+			parser:    utils.parse_200_response_openrouter
 		};
 
 		if (this.is_anthropic()) return {
-			formatter: utils.format_message_array_openai,
+			formatter: utils.format_message_array_standard,
 			maker:     this.anthropic_request.bind(this),
 			parser:    utils.parse_200_response_anthropic
 		};
@@ -281,12 +316,13 @@ const client_prototype = {
 			parser:    utils.parse_200_response_google
 		};
 
-		// Default, OpenAI or similar...
-		return {
-			formatter: utils.format_message_array_openai,
+		if (this.is_openai()) return {
+			formatter: utils.format_message_array_standard,
 			maker:     this.openai_request.bind(this),
 			parser:    utils.parse_200_response_openai
 		};
+
+		throw new Error("Could not determine API from URL");
 	},
 
 	prepare_request: function(conversation, raw) {				// raw flag means conversation is preformatted

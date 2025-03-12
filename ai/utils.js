@@ -8,7 +8,32 @@ exports.clamp = function(low, val, high) {
 	return val;
 };
 
-exports.parse_200_response_openai = function(data) {
+exports.parse_200_response_openai = function(data) {		// This is specifically for the newer "responses" API.
+
+	let output = data?.output || [];
+	let message_objects = output.filter(item => item?.type === "message");
+
+	if (message_objects.length === 0) {
+		throw new RequestError(200, JSON.stringify(data));
+	}
+
+	let all_texts = [];
+
+	for (let message of message_objects) {
+		if (Array.isArray(message.content)) {
+			let text_contents = message.content.filter(o => o.type === "output_text").map(o => o.text).filter(s => typeof s === "string");
+			all_texts.push(...text_contents);
+		}
+	}
+
+	if (all_texts.length === 0) {
+		throw new RequestError(200, JSON.stringify(data));
+	}
+
+	return all_texts.join("\n\n");
+};
+
+exports.parse_200_response_openrouter = function(data) {
 	let content = data?.choices?.[0]?.message?.content;
 	if (typeof content !== "string") {
 		throw new RequestError(200, JSON.stringify(data));
@@ -28,7 +53,7 @@ exports.parse_200_response_google = function(data) {
 };
 
 exports.parse_200_response_anthropic = function(data) {
-	if (!Array.isArray(data.content) || data.content.length === 0) {
+	if (!Array.isArray(data?.content) || data.content.length === 0) {
 		throw new RequestError(200, JSON.stringify(data));
 	}
 	let ret_strings = [];
@@ -46,9 +71,12 @@ exports.parse_200_response_anthropic = function(data) {
 	return ret_strings.join("\n\n");
 };
 
-exports.format_message_array_openai = function(conversation) {
+exports.format_message_array_standard = function(conversation) {
+
+	// Compatible with many things.
+
 	if (!Array.isArray(conversation)) {
-		throw new Error("format_message_array_openai: conversation must be an array");
+		throw new Error("format_message_array_standard: conversation must be an array");
 	}
 
 	let ret = [];
@@ -56,7 +84,7 @@ exports.format_message_array_openai = function(conversation) {
 
 	for (let text of conversation) {
 		if (typeof text !== "string") {
-			throw new Error("format_message_array_openai: conversation contained non-string entry");
+			throw new Error("format_message_array_standard: conversation contained non-string entry");
 		}
 		ret.push({ role: role, content: text });
 		role = role === "user" ? "assistant" : "user";
