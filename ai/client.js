@@ -146,6 +146,14 @@ const client_prototype = {
 		return this.config.url.toUpperCase().includes("OPENROUTER");
 	},
 
+	is_openai_chat_api: function() {
+		return this.config.url.toUpperCase().includes("OPENAI") && this.config.url.toUpperCase().includes("CHAT/COMPLETIONS");
+	},
+
+	is_openai_responses_api: function() {
+		return this.config.url.toUpperCase().includes("OPENAI") && this.config.url.toUpperCase().includes("RESPONSES");
+	},
+
 	handle_429: function(response) {
 		let retry_header = response.headers.get("retry-after");		// .get() works in a case-insensitive way
 		if (retry_header) {
@@ -187,7 +195,7 @@ const client_prototype = {
 		return [headers, data];
 	},
 
-	openai_request: function(formatted_conversation) {
+	openai_chat_api_request: function(formatted_conversation) {
 		let headers = {
 			"authorization": `Bearer ${this.get_api_key()}`,
 			"content-type": "application/json",
@@ -223,15 +231,82 @@ const client_prototype = {
 		return [headers, data];
 	},
 
+	openai_responses_api_request: function(formatted_conversation) {
+		let headers = {
+			"authorization": `Bearer ${this.get_api_key()}`,
+			"content-type": "application/json",
+		};
+
+		let data = {
+			model: this.config.model,
+			input: formatted_conversation,
+			[this.config.max_tokens_key]: this.config.max_tokens,
+		};
+
+		if (this.config.system_prompt) {				// System prompt is first message.
+			data.input.unshift({
+				role: this.config.sp_role,
+				content: this.config.system_prompt
+			});
+			if (this.config.sp_role === "user") {		// If it's a "user" message, add a simple reply to keep [user, assistant] pattern.
+				data.input.splice(1, 0, {
+					role: "assistant",
+					content: "OK, I understood these instructions and I am ready to proceed!"
+				});
+			}
+		}
+
+		if (this.config.temperature >= 0) {
+			data.temperature = this.config.temperature;
+		}
+
+		if (this.config.reasoning_effort) {
+			data.reasoning = {effort: this.config.reasoning_effort};
+		}
+
+		return [headers, data];
+	},
+
 	openrouter_request: function(formatted_conversation) {
-		let [headers, data] = this.openai_request(formatted_conversation);
-		data["include_reasoning"] = true;
+		let headers = {
+			"authorization": `Bearer ${this.get_api_key()}`,
+			"content-type": "application/json",
+		};
+
+		let data = {
+			model: this.config.model,
+			messages: formatted_conversation,
+			[this.config.max_tokens_key]: this.config.max_tokens,
+		};
+
+		if (this.config.system_prompt) {				// System prompt is first message.
+			data.messages.unshift({
+				role: this.config.sp_role,
+				content: this.config.system_prompt
+			});
+			if (this.config.sp_role === "user") {		// If it's a "user" message, add a simple reply to keep [user, assistant] pattern.
+				data.messages.splice(1, 0, {
+					role: "assistant",
+					content: "OK, I understood these instructions and I am ready to proceed!"
+				});
+			}
+		}
+
+		if (this.config.temperature >= 0) {
+			data.temperature = this.config.temperature;
+		}
+
+		if (this.config.reasoning_effort) {
+			data.reasoning = {effort: this.config.reasoning_effort};		// Note this is like OpenAI responses API.
+		}
+
 		if (Array.isArray(this.config.openrouter_order) && this.config.openrouter_order.length > 0) {
-			data["provider"] = {
-				"order": this.config.openrouter_order,
-				"allow_fallbacks": false,
+			data.provider = {
+				order: this.config.openrouter_order,
+				allow_fallbacks: false,
 			};
 		}
+
 		return [headers, data];
 	},
 
@@ -264,13 +339,13 @@ const client_prototype = {
 	get_handlers: function() {
 
 		if (this.is_openrouter()) return {
-			formatter: utils.format_message_array_openai,
+			formatter: utils.format_message_array_standard,
 			maker:     this.openrouter_request.bind(this),
-			parser:    utils.parse_200_response_openai
+			parser:    utils.parse_200_response_openai_chat_api
 		};
 
 		if (this.is_anthropic()) return {
-			formatter: utils.format_message_array_openai,
+			formatter: utils.format_message_array_standard,
 			maker:     this.anthropic_request.bind(this),
 			parser:    utils.parse_200_response_anthropic
 		};
@@ -281,12 +356,19 @@ const client_prototype = {
 			parser:    utils.parse_200_response_google
 		};
 
-		// Default, OpenAI or similar...
-		return {
-			formatter: utils.format_message_array_openai,
-			maker:     this.openai_request.bind(this),
-			parser:    utils.parse_200_response_openai
+		if (this.is_openai_chat_api()) return {
+			formatter: utils.format_message_array_standard,
+			maker:     this.openai_chat_api_request.bind(this),
+			parser:    utils.parse_200_response_openai_chat_api
 		};
+
+		if (this.is_openai_responses_api()) return {
+			formatter: utils.format_message_array_standard,
+			maker:     this.openai_responses_api_request.bind(this),
+			parser:    utils.parse_200_response_openai_responses_api
+		};
+
+		throw new Error("Could not determine API from URL");
 	},
 
 	prepare_request: function(conversation, raw) {				// raw flag means conversation is preformatted
