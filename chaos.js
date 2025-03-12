@@ -556,9 +556,10 @@ const bot_prototype = {
 	},
 
 	send_cost: function(msg) {
+		let any_bot_inaccurate = bots.filter(b => !b.token_count_accurate).length > 0;
 		let s = "```\n" +
 		`I/O:             ${this.sent_tokens} tokens (input) + ${this.received_tokens} tokens (output)\n` +
-		`I/O accurate:    ${this.token_count_accurate}\n` +
+		`I/O accurate:    ${this.token_count_accurate} (self) / ${any_bot_inaccurate} (system)\n` +
 		`Cost:            ${money_string(this.estimated_cost())}\n` +
 		`All bots cost:   ${money_string(system_wide_cost())}\n` +
 		`Budget:          ${money_string(budget)}\n` +
