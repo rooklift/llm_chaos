@@ -128,7 +128,7 @@ const bot_prototype = {
 
 				sent_tokens: 0,															// Count, usually based on actual metadata in response JSON.
 				received_tokens: 0,														// Likewise.
-				token_count_accurate: true,												// Becomes false if we ever rely on estimates.
+				token_count_accurate: true,												// Becomes false if we ever rely on estimates (except due to errors).
 
 				poll_id: null,															// setTimeout id, for cancellation.
 				history: [],															// Using only history_objects as defined above.
