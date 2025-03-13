@@ -2,7 +2,9 @@
 
 exports.Required = ["model", "url"];
 
-// Lets just say that Defaults has every key, so we can check for wrong keys in configs...
+// Lets just say that Defaults has every key, so we can check for wrong keys in configs.
+// An alternative approach (which we don't do yet) would be to allow configs to specify
+// arbitrary entries to populate the POST data json with...
 
 exports.Defaults = {
 
