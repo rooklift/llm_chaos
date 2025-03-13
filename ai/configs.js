@@ -19,11 +19,13 @@ exports.Defaults = {
 	max_tokens: 8192,
 	system_prompt: "",				// Not sent if ""
 	temperature: -1,				// Not sent if -1
-	reasoning_effort: "",			// Not sent if ""			(OpenAI API)
+	reasoning_effort: "",			// Not sent if ""			(OpenAI / OpenRouter APIs)
 	budget_tokens: 0,				// Min 1024					(Anthropic API)
 	anthropic_version: "",			// Not sent if ""			(Irrelevant for non-Anthropic LLMs)
 
 	openrouter_order: [],
+
+	tools: [],						//							(OpenAI "responses" API)
 
 	max_errors: 10,
 	min_delay: 1,

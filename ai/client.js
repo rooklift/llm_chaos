@@ -264,6 +264,10 @@ const client_prototype = {
 			data.reasoning = {effort: this.config.reasoning_effort};
 		}
 
+		if (Array.isArray(this.config.tools) && this.config.tools.length > 0) {
+			data.tools = this.config.tools;
+		}
+
 		return [headers, data];
 	},
 
