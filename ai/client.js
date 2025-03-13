@@ -205,6 +205,7 @@ const client_prototype = {
 			model: this.config.model,
 			messages: formatted_conversation,
 			[this.config.max_tokens_key]: this.config.max_tokens,
+			store: false,
 		};
 
 		if (this.config.system_prompt) {				// For OpenAI, System prompt is first message.
@@ -241,6 +242,7 @@ const client_prototype = {
 			model: this.config.model,
 			input: formatted_conversation,
 			[this.config.max_tokens_key]: this.config.max_tokens,
+			store: false,
 		};
 
 		if (this.config.system_prompt) {				// System prompt is first message.
