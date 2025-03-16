@@ -722,7 +722,7 @@ const bot_prototype = {
 			// Who knows what could happen between asking for permission and getting it...
 
 			if (!this.channel || this.abort_count > abort_count || this.history.length === 0 || this.history[this.history.length - 1].from_me) {
-				return null;
+				throw new Error("Error: Can no longer validly respond!")
 			}
 
 			last = this.last_msg;
@@ -738,18 +738,6 @@ const bot_prototype = {
 			this.sent_tokens += sent_tokens_estimate;		// But we might undo this if we can get the real value later.
 
 			return this.ai_client.send_conversation(conversation, false, this.ai_abortcontroller);
-
-		}).catch(error => {
-
-			if (error.name !== "AbortError") {
-				this.log(error);
-			}
-			if (this.channel) {
-				this.channel.send(error.toString().slice(0, 1999)).catch(discord_error => {		// Not part of main promise chain.
-					console.log(discord_error);
-				});
-			}
-			return null;
 
 		}).then(response => {
 
@@ -816,25 +804,39 @@ const bot_prototype = {
 				chunks.push("(Middleware received only thinking)");
 			}
 
-			// Now, send all the chunks off...
+			// Now, construct the chain which sends all of the chunks...
 
 			let send_promise_chain = Promise.resolve();
+
 			for (let i = 0; i < chunks.length - 1; i++) {	// i < chunks.length - 1 is correct, the last chunk is handled below.
 				let chunk = chunks[i];
-				send_promise_chain = send_promise_chain
-					.then(() => this.channel.send({content: chunk}))
-					.then(() => delay(2000));
+				send_promise_chain = send_promise_chain.then(() => this.channel.send({content: chunk}));
+				send_promise_chain = send_promise_chain.then(() => delay(2000));
 			}
-			return send_promise_chain.then(() => {			// Send the last chunk with all attachments
-				return this.channel.send({
-					content: chunks.length > 0 ? chunks[chunks.length - 1] : "",
-					files: attachments
-				});
+
+			// Add the last chunk with all attachments...
+
+			send_promise_chain = send_promise_chain.then(() => this.channel.send({
+				content: chunks.length > 0 ? chunks[chunks.length - 1] : "",
+				files: attachments
+			}));
+
+			return send_promise_chain.catch(error => {		// If we catch an error while sending to Discord, we can only log it.
+				this.log(error);							// Catching here (nested) means this error will not be propagated below.
+				return null;								// If the main chain had another .then(), it would get this null upon error.
 			});
 
 		}).catch(error => {
 
-			this.log(error);								// We caught an error while sending to Discord, so we can only log it.
+			if (error.name !== "AbortError") {
+				this.log(error);
+			}
+			if (this.channel) {
+				this.channel.send(error.toString().slice(0, 1999)).catch(discord_error => {		// Not part of main promise chain.
+					console.log(discord_error);
+				});
+			}
+			return null;
 
 		}).finally(() => {
 
