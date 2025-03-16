@@ -826,7 +826,7 @@ const bot_prototype = {
 			return send_promise_chain.catch(error => {		// If we catch an error while sending to Discord, we can only log it.
 				this.log(error);							// Catching here (nested) means this error will not be propagated below.
 				return null;								// If the main chain had another .then(), it would get this null upon error.
-			});
+			});												// That's because .catch() returns a promise that restores the chain to normal.
 
 		}).catch(error => {
 
