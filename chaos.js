@@ -743,9 +743,9 @@ const bot_prototype = {
 
 		}).then(response => {
 
-			if (!this.channel || this.abort_count > abort_count) {
-				throw new Error("Error: Unexpected status change!");					// Unlikely this ever happens.
-			}
+			if (!this.channel || this.abort_count > abort_count) {						// Unlikely we are ever here, because the events that would cause this
+				throw new Error("Error: Unexpected status change!");					// should trigger an abort to be sent while send_conversation() is in
+			}																			// progress, causing it itself to throw an AbortError.
 
 			response = response.trim();
 			response = helpers.normalize_linebreaks(response);							// Llama Base confused me once with \r
