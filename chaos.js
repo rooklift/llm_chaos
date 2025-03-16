@@ -830,11 +830,14 @@ const bot_prototype = {
 
 		}).catch(error => {
 
+			this.log(error);
+
 			if (this.channel) {
 				this.channel.send(error.toString().slice(0, 1999)).catch(discord_error => {		// Not part of main promise chain.
 					console.log(discord_error);
 				});
 			}
+
 			return null;
 
 		}).finally(() => {
