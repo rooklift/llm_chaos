@@ -722,12 +722,14 @@ const bot_prototype = {
 			// Who knows what could happen between asking for permission and getting it...
 
 			if (!this.channel || this.abort_count > abort_count || this.history.length === 0 || this.history[this.history.length - 1].from_me) {
-				throw new Error("Error: Can no longer validly respond!")
+				throw new Error("Error: Can no longer validly respond!");
 			}
 
 			last = this.last_msg;
 			if (last) {
-				last.react(this.emoji).catch(error => console.error("Failed to add reaction:", error));
+				last.react(this.emoji).catch(error => {
+					console.error("Failed to add reaction:", error);
+				});
 			}
 
 			this.set_all_history_handled();
@@ -741,8 +743,8 @@ const bot_prototype = {
 
 		}).then(response => {
 
-			if (typeof response !== "string" || !this.channel || this.abort_count > abort_count) {
-				return null;
+			if (!this.channel || this.abort_count > abort_count) {
+				throw new Error("Error: Unexpected status change!");					// Unlikely this ever happens.
 			}
 
 			response = response.trim();
@@ -828,9 +830,6 @@ const bot_prototype = {
 
 		}).catch(error => {
 
-			if (error.name !== "AbortError") {
-				this.log(error);
-			}
 			if (this.channel) {
 				this.channel.send(error.toString().slice(0, 1999)).catch(discord_error => {		// Not part of main promise chain.
 					console.log(discord_error);
