@@ -1,6 +1,7 @@
 {
 	"common": {
 		"owner": "jim",
+		"owner_id": "1234567890123456",
 		"chaos": 0,
 		"system_prompt": "./system/standard.txt",
 		"ping_blind": false,
