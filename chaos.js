@@ -364,7 +364,7 @@ const bot_prototype = {
 	},
 
 	log: function(...args) {
-		console.log(this.conn.user.displayName, ...args);	// Seems to work even if args is length 0.
+		console.log(`[[${this.conn.user.displayName}]]`, ...args);		// Seems to work even if args is length 0.
 	},
 
 	reset: function(msg) {
