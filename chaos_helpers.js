@@ -13,7 +13,7 @@ let fetcher_promises = Object.create(null);			// Holds only promises.
 exports.fetcher = function(url, options = {}) {		// Must always return a promise.
 
 	if (typeof url !== "string") {
-		throw new Error("fetcher: expected string");
+		return Promise.reject(new Error("fetcher: expected string"));
 	}
 
 	if (!Object.hasOwn(fetcher_promises, url)) {
