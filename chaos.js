@@ -303,6 +303,11 @@ const bot_prototype = {
 		}
 	},
 
+	process_queue_spinner: function() {
+		this.process_queue();
+		setTimeout(this.process_queue_spinner.bind(this), 250);
+	},
+
 	process_queue: function() {
 
 		let mentioned_in_simple_msg = false;
@@ -331,11 +336,6 @@ const bot_prototype = {
 		if (mentioned_in_simple_msg) {
 			this.maybe_respond();
 		}
-	},
-
-	process_queue_spinner: function() {
-		this.process_queue();
-		setTimeout(this.process_queue_spinner.bind(this), 250);
 	},
 
 	process_msg_with_attachments: function(msg) {
