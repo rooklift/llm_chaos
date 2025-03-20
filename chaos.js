@@ -532,20 +532,19 @@ const bot_prototype = {
 	},
 
 	retry: function(msg) {
-		let success = false;
+		if (this.in_flight) {
+			this.msg_reply(msg, "Currently in-flight!");
+			return;
+		}
 		for (let i = this.history.length - 1; i >= 0; i--) {
 			if (this.history[i].from_me) {
 				this.history.splice(i, 1);
-				success = true;
-				break;
+				this.last_handled = BigInt(-1);					// Allowing maybe_respond() to say yes.
+				this.maybe_respond();
+				return;
 			}
 		}
-		if (success) {
-			this.last_handled = BigInt(-1);						// Allowing us to retry a response.
-			this.maybe_respond();
-		} else {
-			this.msg_reply(msg, "Nothing found to retry.");
-		}
+		this.msg_reply(msg, "Nothing found to retry.");
 	},
 
 	set_all_history_handled: function() {						// Remember that some history objects have snow_big_int == -1 so don't trust
