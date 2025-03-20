@@ -178,6 +178,7 @@ const bot_prototype = {
 			"!poll":      [(msg, ...args) =>         this.set_poll_wait(msg, ...args), "Set the polling delay in milliseconds."                            ],
 			"!reload":    [(msg, ...args) =>     this.set_system_prompt(msg, ...args), "Reload the system prompt from disk."                               ],
 			"!reset":     [(msg, ...args) =>                 this.reset(msg, ...args), "Clear the history. Make the LLM use this channel."                 ],
+			"!retry":     [(msg, ...args) =>                 this.retry(msg, ...args), "Delete the last response from the history and retry."              ],
 			"!show":      [(msg, ...args) =>    this.set_show_reasoning(msg, ...args), "Set / toggle showing reasoning (if available) in the channel."     ],
 			"!status":    [(msg, ...args) =>           this.send_status(msg, ...args), "Display essential bot status info in this channel."                ],
 			"!system":    [(msg, ...args) =>    this.dump_system_prompt(msg, ...args), "Dump the system prompt to the console."                            ],
@@ -527,6 +528,23 @@ const bot_prototype = {
 		this.abort_count++;
 		if (msg) {
 			this.last_handled = BigInt(msg.id) - BigInt(1);		// Prevent earlier messages being responded to; but not this message itself!
+		}
+	},
+
+	retry: function(msg) {
+		let success = false;
+		for (let i = this.history.length - 1; i >= 0; i--) {
+			if (this.history[i].from_me) {
+				this.history.splice(i, 1);
+				success = true;
+				break;
+			}
+		}
+		if (success) {
+			this.last_handled = BigInt(-1);						// Allowing us to retry a response.
+			this.maybe_respond();
+		} else {
+			this.msg_reply(msg, "Nothing found to retry.");
 		}
 	},
 
