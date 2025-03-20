@@ -135,6 +135,7 @@ const bot_prototype = {
 				queue: [],																// Messages (as Discord objects) waiting to be processed.
 				channel: null,															// The actual channel object, hopefully safe to store?
 				in_flight: false,														// http request in progress to LLM? (Only to LLM now.)
+				queue_handler_in_flight: false,											// Promise chain in progress to handle queue?
 				ai_abortcontroller: null,												// AbortController for cancelling LLM requests only.
 				abort_count: 0,															// Used to know when we should cancel / disregard results.
 				last_msg: null,															// Last message received. Purely for emoji reactions.
@@ -310,7 +311,16 @@ const bot_prototype = {
 
 	process_queue: function() {
 
-		let mentioned_in_simple_msg = false;
+		// Because handling messages with attachments can take some time, we use a Promise chain
+		// setup to make sure messages are handled in the correct order.
+
+		if (this.queue_handler_in_flight) {
+			return;
+		}
+		this.queue_handler_in_flight = true;
+
+		let mentioned = false;
+		let promise_chain = Promise.resolve();
 
 		while (this.queue.length > 0) {
 			let msg = this.queue.shift();
@@ -323,19 +333,32 @@ const bot_prototype = {
 				}
 				continue;
 			}
+			if (msg_from_human(msg) && this.msg_mentions_me(msg)) {
+				mentioned = true;
+			}
 			if (msg.attachments.size === 0) {
-				this.add_base_message_to_history(msg);
-				if (msg_from_human(msg) && this.msg_mentions_me(msg)) {
-					mentioned_in_simple_msg = true;
-				}
+				promise_chain = promise_chain.then(() => {
+					return this.process_simple_msg(msg);
+				});
 			} else {
-				this.process_msg_with_attachments(msg);		// msg not added to the history until attachments are retrieved.
+				promise_chain = promise_chain.then(() => {
+					return this.process_msg_with_attachments(msg);
+				});
 			}
 		}
 
-		if (mentioned_in_simple_msg) {
-			this.maybe_respond();
-		}
+		return promise_chain.finally(() => {
+			this.queue_handler_in_flight = false;
+			if (mentioned) {
+				this.maybe_respond();
+			}
+		});
+	},
+
+	process_simple_msg: function(msg) {
+		return Promise.resolve().then(() => {
+			this.add_base_message_to_history(msg);
+		});
 	},
 
 	process_msg_with_attachments: function(msg) {
@@ -343,7 +366,7 @@ const bot_prototype = {
 		let abort_count = this.abort_count;
 		let all_fetches = attachment_fetches(msg);			// See that function for the format of the resolved values.
 
-		Promise.allSettled(all_fetches).then(results => {
+		return Promise.allSettled(all_fetches).then(results => {
 			if (this.abort_count > abort_count) {
 				return;
 			}
@@ -356,9 +379,6 @@ const bot_prototype = {
 				} else {
 					this.log(result.reason);
 				}
-			}
-			if (msg_from_human(msg) && this.msg_mentions_me(msg)) {		// Try to respond instantly if it's a human ping.
-				this.maybe_respond();
 			}
 		});
 	},
@@ -971,7 +991,7 @@ function attachment_fetches(msg) {								// Returns array of promises
 	for (let a of msg.attachments.values()) {					// Remembering msg.attachments is a Map[]
 		if (helpers.probably_text(a.contentType)) {
 			let size = parseInt(a.size) || Infinity;			// If parseInt fails use Infinity
-			if (size < 1024 * 32) {								// Let's use 32K limit
+			if (size < 1024 * 64) {								// Let's use 64K limit
 				ret.push(
 					helpers.fetcher(a.url)
 						.then(response => response.text())
@@ -979,6 +999,8 @@ function attachment_fetches(msg) {								// Returns array of promises
 							return {filename: a.name, text: t};	// This is the resolved object seen by add_attachment_to_history()
 						})
 				);
+			} else {
+				console.error(`Error: did not download ${a.name} due to size!`);
 			}
 		}
 	}
