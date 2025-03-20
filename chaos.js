@@ -692,9 +692,7 @@ const bot_prototype = {
 	maybe_respond: function() {
 		if (this.can_respond()) {
 			this.respond();
-			return true;
 		}
-		return false;
 	},
 
 	respond: function() {
