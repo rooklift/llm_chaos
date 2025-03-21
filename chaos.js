@@ -378,7 +378,7 @@ const bot_prototype = {
 				if (result.status === "fulfilled") {
 					this.add_attachment_to_history(msg, result.value);
 				} else {
-					this.log(result.reason);
+					this.log(result.reason);				// Probably this will lead to all bots logging the same error. Meh.
 				}
 			}
 		});
@@ -1017,7 +1017,7 @@ function attachment_fetches(msg) {								// Returns array of promises
 						})
 				);
 			} else {
-				console.error(`Error: did not download ${a.name} due to size!`);
+				ret.push(Promise.reject(new Error(`Did not download ${a.name} due to size!`)));
 			}
 		}
 	}
