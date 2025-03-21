@@ -627,7 +627,7 @@ const bot_prototype = {
 	cmd_from_msg: function(msg) {
 		let default_result = {cmd: "", args: []};
 		let content = msg.content.replace(/<@!?\d+>/g, " ");						// Purge all pings. <@12345> and <@!12345> formats.
-		if (content > 256) {
+		if (content.length > 256) {
 			return default_result;
 		}
 		let parts = content.split(" ").map(s => s.trim()).filter(z => z !== "");
