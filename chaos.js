@@ -157,9 +157,9 @@ const bot_prototype = {
 			});
 
 			let commands = {	// Note that the first arg received by all of these will be msg. Then any other args (which most don't use).
-			"!abort":     [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !break."                                                 ],
+			"!abort":     [(msg, ...args) =>                 this.abort(msg, ...args), "Abort current operation. Bump last_handled marker."                ],
 			"!blind":     [(msg, ...args) =>         this.set_blindness(msg, ...args), "Set / toggle being ping-blind."                                    ],
-			"!break":     [(msg, ...args) =>                 this.abort(msg, ...args), "Abort current operation. Bump last_handled marker."                ],
+			"!break":     [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !abort."                                                 ],
 			"!budget":    [(msg, ...args) =>     this.set_dollar_budget(msg, ...args), "Set the budget in dollars."                                        ],
 			"!chaos":     [(msg, ...args) =>             this.set_chaos(msg, ...args), "Set chaos value (chance of responding to non-pings)."              ],
 			"!config":    [(msg, ...args) =>           this.send_config(msg, ...args), "Display LLM config in this channel."                               ],
@@ -185,8 +185,8 @@ const bot_prototype = {
 			"!tokens":    [(msg, ...args) =>        this.set_max_tokens(msg, ...args), "Set max_tokens for the LLM."                                       ],
 			};
 
-			let broadcast_commands = ["!abort", "!break", "!reset"];		// Commands that can be sent untargetted.
-			let hidden_commands = ["!abort", "!costs"];						// Commands that won't show up in help. (Aliases.)
+			let broadcast_commands = ["!abort", "!break", "!reset"];					// Commands that can be sent untargetted.
+			let hidden_commands = ["!break", "!costs"];									// Commands that won't show up in help. (Aliases.)
 
 			let help = (msg) => {
 				let st = ["```\nNormal commands - ping the LLM:\n"];
