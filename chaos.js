@@ -299,7 +299,7 @@ const bot_prototype = {
 		this.ai_client.replace_in_system_prompt("{{userName}}", this.conn.user.displayName, true);
 		this.ai_client.replace_in_system_prompt("{{userId}}", this.conn.user.id, true);
 		this.ai_client.replace_in_system_prompt("{{systemHeaderExample}}", system_header_example, true);
-		this.ai_client.replace_in_system_prompt("{{modelsInTheServer}}", all_llm_info.join("\n"), true);
+		this.ai_client.replace_in_system_prompt("{{modelsInTheServer}}", all_llm_info.join("\n"), true);	// Not actually in S.P. as of 2025-04-04
 		this.ai_client.replace_in_system_prompt("{{serverOwner}}", this.owner, true);
 
 		if (msg) {
