@@ -19,7 +19,7 @@ const DEFAULT_BUDGET = 50;					// Won't do anything if prices aren't accurately 
 let bots = [];
 let budget = 0;
 let ever_sent_budget_error = false;
-let username_id_map = Object.create(null);	// displayName --> 1234567890123456789 for all known creatures in the server.
+let username_id_map = Object.create(null);	// displayName --> "1234567890123456789" (as string) for all known creatures in the server.
 
 // ------------------------------------------------------------------------------------------------
 // History objects storing only essential info out of a discord message, needed by the LLMs.
