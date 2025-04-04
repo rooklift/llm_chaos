@@ -763,13 +763,13 @@ const bot_prototype = {
 			// Who knows what could happen between asking for permission and getting it...
 
 			if (!this.channel) {
-				throw new Error("No channel!");
+				throw new Error("Was going to make a response but: no channel!");
 			} else if (this.abort_count > abort_count) {
-				throw new Error("Abort count was incremented!");
+				throw new Error("Was going to make a response but: abort count was incremented!");
 			} else if (this.history.length === 0) {
-				throw new Error("History was cleared!");
+				throw new Error("Was going to make a response but: history was cleared!");
 			} else if (this.history[this.history.length - 1].from_me) {
-				throw new Error("Last message in history is from me!");
+				throw new Error("Was going to make a response but: last message in history is from me!");
 			}
 
 			last = this.last_msg;
