@@ -709,6 +709,9 @@ const bot_prototype = {
 		if (!this.channel || this.in_flight) {
 			return false;
 		}
+		if (this.history.length > 0 && this.history[this.history.length - 1].from_me) {
+			return false;
+		}
 		for (let o of this.history) {
 			if (this.restricted && o.author_id !== this.owner_id) {
 				continue;
