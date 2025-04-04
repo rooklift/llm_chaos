@@ -696,22 +696,7 @@ const bot_prototype = {
 		// Can't update this.last_msg because we aren't receiving a msg, this is our own output.
 	},
 
-	can_respond: function() {
-		if (system_wide_cost() > budget) {
-			if (!ever_sent_budget_error && this.channel) {
-				ever_sent_budget_error = true;
-				this.channel.send("Budget exceeded!").catch(error => {
-					console.log(error);
-				});
-			}
-			return false;
-		}
-		if (!this.channel || this.in_flight) {
-			return false;
-		}
-		if (this.history.length > 0 && this.history[this.history.length - 1].from_me) {
-			return false;
-		}
+	want_to_respond: function() {							// Is there something to respond to?
 		for (let o of this.history) {
 			if (this.restricted && o.author_id !== this.owner_id) {
 				continue;
@@ -720,11 +705,24 @@ const bot_prototype = {
 				return true;
 			}
 		}
-		// If we get here, we looked at the entire history without responding, so set this.last_handled.
-		// This is necessary because chaotic bots will always have some chance to reply to older messages,
-		// including on future calls to can_respond().
-		this.set_all_history_handled();
 		return false;
+	},
+
+	can_respond: function() {								// Can we actually respond right now?
+		if (this.over_budget()) {
+			return false;
+		}
+		if (!this.channel || this.in_flight) {
+			return false;
+		}
+		if (this.history.length === 0 || this.history[this.history.length - 1].from_me) {
+			return false;
+		}
+		return true;
+	},
+
+	over_budget: function() {
+		return system_wide_cost() > budget;
 	},
 
 	maybe_respond_spinner: function() {
@@ -733,8 +731,19 @@ const bot_prototype = {
 	},
 
 	maybe_respond: function() {
-		if (this.can_respond()) {
-			this.respond();
+		if (this.want_to_respond()) {
+			if (this.can_respond()) {
+				this.respond();
+			} else if (this.over_budget()) {
+				if (!ever_sent_budget_error && this.channel) {
+					ever_sent_budget_error = true;
+					this.channel.send("Budget exceeded!").catch(error => {
+						console.log(error);
+					});
+				}
+			}
+		} else {
+			this.set_all_history_handled();					// Prevent chaotic bots from re-testing against messages we didn't want to respond to.
 		}
 	},
 
