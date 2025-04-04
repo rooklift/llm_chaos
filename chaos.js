@@ -290,7 +290,7 @@ const bot_prototype = {
 			if (bot.ping_blind) special.push("ping-blind");
 			let special_string = special.length ? `  <-- special flags: ${special.join(", ")}` : "";
 
-			all_llm_info.push(`${bot.ai_client.config.full_name} created by ${company}, username ${dname} -- ping with <@${id}>${special_string}`);
+			all_llm_info.push(`${bot.ai_client.config.full_name} created by ${company}, username ${dname}${special_string}`);
 		}
 
 		let system_header_example = normal_system_header({author_name: "exampleuser", author_type: "human", author_id: "1234567890"}).trim();
@@ -299,7 +299,7 @@ const bot_prototype = {
 		this.ai_client.replace_in_system_prompt("{{userName}}", this.conn.user.displayName, true);
 		this.ai_client.replace_in_system_prompt("{{userId}}", this.conn.user.id, true);
 		this.ai_client.replace_in_system_prompt("{{systemHeaderExample}}", system_header_example, true);
-		this.ai_client.replace_in_system_prompt("{{modelsInTheServer}}", all_llm_info.join("\n"), true);	// Not actually in S.P. as of 2025-04-04
+		this.ai_client.replace_in_system_prompt("{{modelsInTheServer}}", all_llm_info.join("\n"), true);
 		this.ai_client.replace_in_system_prompt("{{serverOwner}}", this.owner, true);
 
 		if (msg) {
