@@ -19,6 +19,7 @@ const DEFAULT_BUDGET = 50;					// Won't do anything if prices aren't accurately 
 let bots = [];
 let budget = 0;
 let ever_sent_budget_error = false;
+let username_id_map = Object.create(null);	// displayName --> 1234567890123456789 for all known creatures in the server.
 
 // ------------------------------------------------------------------------------------------------
 // History objects storing only essential info out of a discord message, needed by the LLMs.
@@ -153,6 +154,7 @@ const bot_prototype = {
 			]});
 
 			this.conn.on("ready", () => {
+				username_id_map[this.conn.user.displayName] = this.conn.user.id;
 				resolve(this);						// The promise returned by init() is resolved when the Discord connection is "ready"
 			});
 
@@ -206,6 +208,7 @@ const bot_prototype = {
 			};
 
 			this.conn.on("messageCreate", (msg) => {
+				update_user_list_from_msg(msg);
 				if (this.msg_is_mine(msg)) {					// Totally ignore own messages.
 					return;
 				}
@@ -647,7 +650,7 @@ const bot_prototype = {
 			author_type:  user_type_from_msg(msg),
 			from_me:      this.msg_is_mine(msg),
 			pings_me:     this.msg_mentions_me(msg),
-			text:         msg.content,						// It's a mistake to use msg.cleanContent as it trains the LLMs on wrong ping format.
+			text:         msg.cleanContent,					// This converts pings to the readable @username form.
 			filename:     null
 		});
 		if (o.from_me) {
@@ -788,6 +791,8 @@ const bot_prototype = {
 			if (response) {
 				this.add_own_response_to_history(response);
 			}
+
+			response = ping_converter(response);										// After it's in history, fix @username to canonical Discord pings.
 
 			let think_chunks = [];
 			let main_chunks = [];
@@ -1001,6 +1006,45 @@ function msg_from_human(msg) {
 
 function user_type_from_msg(msg) {
 	return msg.author.bot ? "AI" : "human";
+}
+
+function update_user_list_from_msg(msg) {
+
+	if (username_id_map[msg.author.displayName] === msg.author.id) {
+		return;
+	}
+
+	// If a user changes name, some old name will be associated with the id. Delete it.
+
+	let names_with_this_id = Object.keys(username_id_map).filter(key => username_id_map[key] === msg.author.id);
+	for (let name of names_with_this_id) {
+		delete username_id_map[name];
+	}
+
+	username_id_map[msg.author.displayName] = msg.author.id;
+}
+
+function ping_converter(s) {
+	// Converts strings with @username pings to <@12345> format, when user is known.
+	// Written by Claude since I hate regex, though this is a bit complex...
+
+    // Sort keys by length (longest first) to avoid partial matches
+    const sortedEntries = Object.entries(username_id_map)
+        .sort((a, b) => b[0].length - a[0].length);
+
+    for (let [key, val] of sortedEntries) {
+        // Escape special regex characters in the username
+        const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+        // Create the regex pattern that handles punctuation after mentions
+        const regexPattern = new RegExp(`(^|\\s)@(${escapedKey})(?=\\s|$|[,.!?])`, "g");
+
+        // Replace @username with <@id>
+        s = s.replace(regexPattern, (match, prefix, name) => {
+            return `${prefix}<@${val}>`;
+        });
+    }
+    return s;
 }
 
 function attachment_fetches(msg) {								// Returns array of promises
