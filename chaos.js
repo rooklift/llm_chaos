@@ -759,8 +759,14 @@ const bot_prototype = {
 
 			// Who knows what could happen between asking for permission and getting it...
 
-			if (!this.channel || this.abort_count > abort_count || this.history.length === 0 || this.history[this.history.length - 1].from_me) {
-				throw new Error("Error: Can no longer validly respond!");
+			if (!this.channel) {
+				throw new Error("No channel!");
+			} else if (this.abort_count > abort_count) {
+				throw new Error("Abort count was incremented!");
+			} else if (this.history.length === 0) {
+				throw new Error("History was cleared!");
+			} else if (this.history[this.history.length - 1].from_me) {
+				throw new Error("Last message in history is from me!");
 			}
 
 			last = this.last_msg;
@@ -1025,26 +1031,12 @@ function update_user_list_from_msg(msg) {
 }
 
 function ping_converter(s) {
-	// Converts strings with @username pings to <@12345> format, when user is known.
-	// Written by Claude since I hate regex, though this is a bit complex...
-
-    // Sort keys by length (longest first) to avoid partial matches
-    const sortedEntries = Object.entries(username_id_map)
-        .sort((a, b) => b[0].length - a[0].length);
-
-    for (let [key, val] of sortedEntries) {
-        // Escape special regex characters in the username
-        const escapedKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-        // Create the regex pattern that handles punctuation after mentions
-        const regexPattern = new RegExp(`(^|\\s)@(${escapedKey})(?=\\s|$|[,.!?])`, "g");
-
-        // Replace @username with <@id>
-        s = s.replace(regexPattern, (match, prefix, name) => {
-            return `${prefix}<@${val}>`;
-        });
-    }
-    return s;
+	// Sort by length (longest first) in case two usernames have the same start...
+	const sortedEntries = Object.entries(username_id_map).sort((a, b) => b[0].length - a[0].length);
+	for (let [username, id] of sortedEntries) {
+		s = s.replace(new RegExp(`@${username}`, "g"), `<@${id}>`);
+	}
+	return s;
 }
 
 function attachment_fetches(msg) {								// Returns array of promises
