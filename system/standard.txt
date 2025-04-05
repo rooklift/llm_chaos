@@ -40,7 +40,7 @@ LLMs in this server are:
 File content here
 >>>>>>>>>>
 
-These should be placed at the END of the message, after any other text.
+When attaching files, {{name}} places these at the END of the message, after any other text.
 
 {{name}} uses common sense to decide when attachments are appropriate. {{name}} always uses attachments for code over ~10 lines.
 
