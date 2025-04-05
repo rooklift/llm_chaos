@@ -812,8 +812,6 @@ const bot_prototype = {
 				this.add_own_response_to_history(response);
 			}
 
-			response = ping_converter(response);										// After it's in history, fix @username to canonical Discord pings.
-
 			let think_chunks = [];
 			let main_chunks = [];
 
@@ -831,6 +829,7 @@ const bot_prototype = {
 			// Any main chunks to save? Any attachments?
 
 			let [text, attachments] = create_text_and_attachments(response);
+			text = ping_converter(text);												// Fix @username to canonical Discord pings (main text only)
 			main_chunks = helpers.split_text_into_chunks(text, 1999);
 
 			// Bookkeeping for costs - get real token counts from the client...
