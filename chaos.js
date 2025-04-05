@@ -749,9 +749,6 @@ const bot_prototype = {
 
 	respond: function() {
 
-		// Regardless of what actually triggered the response, it's reasonable to consider us as reacting to the last message
-		// in the history, since we see up to that point.
-
 		this.in_flight = true;
 		this.ai_abortcontroller = new AbortController();
 
@@ -781,6 +778,9 @@ const bot_prototype = {
 				throw new Error("Was going to make a response but: last message in history is from me!");
 			}
 
+			// Regardless of what actually triggered the response, it's reasonable to consider us as reacting to the last message
+			// in the history, since we see up to that point.
+
 			last = this.last_msg;
 			if (last) {
 				last.react(this.emoji).catch(error => {
@@ -791,9 +791,11 @@ const bot_prototype = {
 			this.set_all_history_handled();
 			let conversation = this.format_history();
 
+			// We add an estimate of tokens sent to our total, but we will undo it if we get a real value later.
+
 			let sent_chars_estimate = conversation.reduce((total, s) => total + s.length, 0) + this.ai_client.config.system_prompt.length;
 			sent_tokens_estimate = Math.floor(sent_chars_estimate / CHAR_TOKEN_RATIO);
-			this.sent_tokens += sent_tokens_estimate;		// But we might undo this if we can get the real value later.
+			this.sent_tokens += sent_tokens_estimate;
 
 			return this.ai_client.send_conversation(conversation, false, this.ai_abortcontroller);
 
