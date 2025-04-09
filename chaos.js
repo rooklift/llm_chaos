@@ -797,7 +797,12 @@ const bot_prototype = {
 			sent_tokens_estimate = Math.floor(sent_chars_estimate / CHAR_TOKEN_RATIO);
 			this.sent_tokens += sent_tokens_estimate;
 
-			return this.ai_client.send_conversation(conversation, false, this.ai_abortcontroller);
+			// SPECIAL TEST / FIXME
+
+			let conversation_raw = this.format_history_raw_simple();
+			return this.ai_client.send_conversation(conversation_raw, true, this.ai_abortcontroller);
+
+			// return this.ai_client.send_conversation(conversation, false, this.ai_abortcontroller);
 
 		}).then(response => {
 
@@ -962,6 +967,31 @@ const bot_prototype = {
 			}
 		}
 		push_block();
+
+		return ret;
+	},
+
+	format_history_raw_simple: function() {
+
+		// Produces a raw conversation array that also can run multiple "user" messages together.
+
+		let ret = [];
+
+		for (let o of this.history) {
+			if (o.from_me) {
+				ret.push({role: "assistant", content: o.lesser_string()});
+			} else {
+				ret.push({role: "user", content: o.full_string()});
+			}
+		}
+
+		// Google has its own format for chat history...
+
+		if (this.ai_client.is_google()) {
+			ret = ret.map(foo => {
+				return {role: foo.role === "assistant" ? "model" : "user", parts: [{text: foo.content}]};
+			});
+		}
 
 		return ret;
 	},
