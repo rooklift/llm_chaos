@@ -401,6 +401,8 @@ const client_prototype = {
 				return thinking_item.thinking.trim() || "";
 			} else if (this.is_openrouter()) {
 				return o.choices[0].message.reasoning.trim() || "";
+			} else {
+				return o.choices[0].message.reasoning_content.trim() || "";
 			}
 		} catch (error) {									// i.e. something was non-existant or the wrong type
 			return "";
@@ -428,6 +430,14 @@ const client_prototype = {
 	get_last_output_token_count: function() {				// The || 0 below is for the slight chance of NaN
 		try {
 			let o = this.last_receive;
+			// Avoid some bugs (untrustworthy output token counts) by using total tokens minus prompt tokens...
+			if (typeof o?.usage?.total_tokens === "number" && typeof o?.usage?.prompt_tokens === "number") {
+				return o.usage.total_tokens - o.usage.prompt_tokens || 0;
+			}
+			if (typeof o?.usage?.total_tokens === "number" && typeof o?.usage?.input_tokens === "number") {
+				return o.usage.total_tokens - o.usage.input_tokens || 0;
+			}
+			// Otherwise...
 			if (typeof o?.usage?.output_tokens === "number") {							// Anthropic and OpenAI "responses" format
 				return o.usage.output_tokens || 0;
 			}
