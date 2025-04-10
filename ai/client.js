@@ -374,7 +374,13 @@ const client_prototype = {
 			parser:    utils.parse_200_response_openai_responses_api
 		};
 
-		throw new Error("Could not determine API from URL");
+		// Standard... is currently just the same as OpenAI Chat API:
+
+		return {
+			formatter: utils.format_message_array_standard,
+			maker:     this.openai_chat_api_request.bind(this),
+			parser:    utils.parse_200_response_openai_chat_api
+		};
 	},
 
 	prepare_request: function(conversation, raw) {				// raw flag means conversation is preformatted
