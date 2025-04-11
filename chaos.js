@@ -599,6 +599,7 @@ const bot_prototype = {
 		let s = "```\n" +
 		`I/O:             ${this.sent_tokens} tokens (input) + ${this.received_tokens} tokens (output)\n` +
 		`I/O accurate:    ${this.token_count_accurate} (self) / ${bots.every(b => b.token_count_accurate)} (system)\n` +
+		`Output calc:     ${this.ai_client.output_token_method}\n` +
 		`Cost:            ${money_string(this.estimated_cost())}\n` +
 		`All bots cost:   ${money_string(system_wide_cost())} (WARNING: tool use not included!)\n` +
 		`Budget:          ${money_string(budget)}\n` +

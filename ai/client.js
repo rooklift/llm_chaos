@@ -60,6 +60,8 @@ function new_client(cfg) {
 	client.last_send = null;
 	client.last_receive = null;
 
+	client.output_token_method = "";					// An info string of how output tokens are being counted.
+
 	return client;
 }
 
@@ -432,23 +434,30 @@ const client_prototype = {
 			let o = this.last_receive;
 			// Avoid some bugs (untrustworthy output token counts) by using total tokens minus prompt tokens...
 			if (typeof o?.usage?.total_tokens === "number" && typeof o?.usage?.prompt_tokens === "number") {
+				this.output_token_method = "total_tokens - prompt_tokens";
 				return o.usage.total_tokens - o.usage.prompt_tokens || 0;
 			}
 			if (typeof o?.usage?.total_tokens === "number" && typeof o?.usage?.input_tokens === "number") {
+				this.output_token_method = "total_tokens - input_tokens";
 				return o.usage.total_tokens - o.usage.input_tokens || 0;
 			}
 			// Otherwise...
 			if (typeof o?.usage?.output_tokens === "number") {							// Anthropic and OpenAI "responses" format
+				this.output_token_method = "output_tokens";
 				return o.usage.output_tokens || 0;
 			}
 			if (typeof o?.usageMetadata?.candidatesTokenCount === "number") {			// Google format
+				this.output_token_method = "candidatesTokenCount";
 				return o.usageMetadata.candidatesTokenCount || 0;
 			}
 			if (typeof o?.usage?.completion_tokens === "number") {						// OpenAI "chat completion" format
+				this.output_token_method = "completion_tokens";
 				return o.usage.completion_tokens || 0;
 			}
+			this.output_token_method = "couldn't find data";
 			return 0;
 		} catch (error) {
+			this.output_token_method = "error";
 			return 0;
 		}
 	},
