@@ -265,7 +265,10 @@ const client_prototype = {
 		}
 
 		if (this.config.reasoning_effort) {
-			data.reasoning = {effort: this.config.reasoning_effort};
+			data.reasoning = {
+				effort: this.config.reasoning_effort,
+				// summary: "auto",						// Can't do this on OpenAI without being verified.
+			};
 		}
 
 		if (Array.isArray(this.config.tools) && this.config.tools.length > 0) {
