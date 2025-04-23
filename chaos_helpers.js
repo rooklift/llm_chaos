@@ -167,7 +167,7 @@ function fix_code_blocks(chunks, true_maxlen) {					// Written by Claude.
 		let chunk = chunks[i];
 
 		// Check if this chunk ends with an unclosed code block
-		let codeBlockMatches = chunk.match(/```(\w*)[^`]*$/);
+		let codeBlockMatches = chunk.match(/^```(\w*)[^`]*$/m);
 		let endsWithUnclosedCodeBlock = codeBlockMatches && !chunk.endsWith("```");
 
 		if (endsWithUnclosedCodeBlock) {
