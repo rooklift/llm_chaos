@@ -40,6 +40,10 @@ exports.fetcher = function(url, options = {}) {		// Must always return a promise
 
 exports.split_text_into_chunks = function(text, maxlen) {			// Written by Claude.
 
+	// Reduce effective maxlen by 30 characters to create buffer space for code block handling
+	let true_maxlen = maxlen;
+	maxlen -= 30;
+
 	text = text.replace(/\n(?:\s*\n)+/g, "\n\n");
 	text = text.trim();
 
@@ -49,7 +53,7 @@ exports.split_text_into_chunks = function(text, maxlen) {			// Written by Claude
 	}
 
 	// If text is short enough, just return it
-	if (text.length <= maxlen) {
+	if (text.length <= true_maxlen) {
 		return [text];
 	}
 
@@ -94,7 +98,10 @@ exports.split_text_into_chunks = function(text, maxlen) {			// Written by Claude
 		chunks.push(current_chunk);
 	}
 
-	return chunks.map(s => s.trim()).filter(s => s !== "");
+	chunks = chunks.map(s => s.trim()).filter(s => s !== "");
+
+	// Process code blocks that might be split across chunks, passing the true maxlen
+	return fix_code_blocks(chunks, true_maxlen);
 };
 
 exports.split_paragraph = function(paragraph, maxlen) {			// Written by Claude.
@@ -146,6 +153,85 @@ exports.split_paragraph = function(paragraph, maxlen) {			// Written by Claude.
 
 	return chunks;
 };
+
+function fix_code_blocks(chunks, true_maxlen) {					// Written by Claude.
+
+	if (chunks.length <= 1) {
+		return chunks;
+	}
+
+	let result = [];
+	let openCodeBlock = null;
+
+	for (let i = 0; i < chunks.length; i++) {
+		let chunk = chunks[i];
+
+		// Check if this chunk ends with an unclosed code block
+		let codeBlockMatches = chunk.match(/```(\w*)[^`]*$/);
+		let endsWithUnclosedCodeBlock = codeBlockMatches && !chunk.endsWith("```");
+
+		if (endsWithUnclosedCodeBlock) {
+			// Store the language if specified
+			openCodeBlock = codeBlockMatches[1] || "";
+
+			// Close the code block at the end of this chunk
+			let modified_chunk = chunk + "\n```";
+
+			// Check if it's still within maxlen
+			if (modified_chunk.length <= true_maxlen) {
+				result.push(modified_chunk);
+			} else {
+				// Fallback to using the original chunk in this case
+				result.push(chunk);
+			}
+		} else if (openCodeBlock !== null && i > 0) {
+			// This chunk continues a code block from the previous chunk
+			// Prepend a code block marker with the same language
+			let languageSpec = openCodeBlock ? openCodeBlock : "";
+			let modified_chunk = "```" + languageSpec + "\n" + chunk;
+
+			// Check if it's within maxlen
+			if (modified_chunk.length <= true_maxlen) {
+				result.push(modified_chunk);
+			} else {
+				// Fallback to simpler opening (no language spec) if too long
+				modified_chunk = "```\n" + chunk;
+				if (modified_chunk.length <= true_maxlen) {
+					result.push(modified_chunk);
+				} else {
+					result.push(chunk);
+				}
+			}
+
+			// Reset openCodeBlock if this chunk ends with ```
+			if (chunk.endsWith("```")) {
+				openCodeBlock = null;
+			}
+		} else {
+			result.push(chunk);
+
+			// Check if this chunk opened and closed code blocks
+			let closedBlocks = (chunk.match(/```/g) || []).length;
+			if (closedBlocks % 2 !== 0) {
+				// Odd number of ``` markers means we have an unclosed block at the end
+				let lastOpenPos = chunk.lastIndexOf("```");
+				let language = "";
+
+				// Extract language if specified
+				let languageMatch = chunk.substring(lastOpenPos).match(/```(\w*)/);
+				if (languageMatch) {
+					language = languageMatch[1];
+				}
+
+				openCodeBlock = language;
+			} else {
+				openCodeBlock = null;
+			}
+		}
+	}
+
+	return result;
+}
 
 // ------------------------------------------------------------------------------------------------
 
