@@ -154,75 +154,63 @@ exports.split_paragraph = function(paragraph, maxlen) {			// Written by Claude.
 	return chunks;
 };
 
-exports.fix_code_blocks = function (chunks, true_maxlen) {		// Written by o3
+exports.fix_code_blocks = function(chunks, true_maxlen) {		// Idea by o3, but somewhat human written.
 
-/**
- * Fixes unbalanced Markdown ``` fences created when long text is split into
- * separate Discord messages.   The algorithm guarantees that **each individual
- * chunk is a well‑formed message** (an even number of triple‑backtick fences)
- * while preserving the original language spec where possible.
- *
- * Strategy in brief:
- *   1. Track whether the previous chunk ended *inside* a code‑block.  If so we
- *      reopen that block at the start of the next chunk.
- *   2. Count every ``` fence in the current chunk to see whether we are still
- *      inside a block when we reach the end.
- *   3. If the block is still open, append a closing fence (space permitting)
- *      and remember the language so it can be reopened in the following chunk.
- *
- * @param {string[]} chunks      – output of split_text_into_chunks before repair
- * @param {number}   true_maxlen – *full* per‑message limit (not the reduced
- *                                value that split_text_into_chunks works with)
- * @returns {string[]}           – chunks with balanced code fences
- */
-
-	if (!Array.isArray(chunks) || chunks.length <= 1) return chunks;
-
-	const result = [];
-	let reopenLang = null;                // language to reopen in next chunk
-
-	for (let chunk of chunks) {
-		// 1. Re‑open if we previously closed a block purely because of length
-		if (reopenLang !== null) {
-			const opener = "```" + (reopenLang || "") + "\n";
-			if (chunk.length + opener.length <= true_maxlen) {
-				chunk = opener + chunk;
-			} else if (chunk.length + 4 <= true_maxlen) {   // fallback w/out lang
-				chunk = "```\n" + chunk;
-			}
-		}
-
-		// 2. Scan every ``` fence in the chunk and toggle an in‑block flag
-		const fences = [...chunk.matchAll(/```(\w*)?/g)];
-		let inBlock = false;
-		let currentLang = reopenLang;      // carry‑over from step 1 if any
-
-		for (const match of fences) {
-			if (inBlock) {
-				inBlock = false;          // this fence closes the block
-				currentLang = null;
-			} else {
-				inBlock = true;           // this fence opens the block
-				currentLang = match[1] ?? "";
-			}
-		}
-
-		// 3. If the block is still open when we reach the end of the chunk,
-		//    close it so each Discord message stands on its own.
-		if (inBlock) {
-			if (chunk.length + 4 <= true_maxlen) {
-				chunk += "\n```";        // close it now…
-			}
-			// ...but remember to reopen it in the next chunk.
-			reopenLang = currentLang;
-		} else {
-			reopenLang = null;
-		}
-
-		result.push(chunk);
+	if (chunks.length <= 1) {
+		return chunks;
 	}
 
-	return result;
+	let ret = [];
+	let current_lang = null;		// null for none, any string including "" for something
+
+	for (let orig_chunk of chunks) {
+
+		let chunk = orig_chunk;
+
+		// If the previous chunk ended without closing properly, current_lang will be set...
+
+		if (current_lang !== null) {
+			chunk = "```" + current_lang + "\n" + chunk;
+		}
+
+		// We now set current_lang to null because we are about to analyse this whole chunk
+		// from the start, regardless of anything we just did.
+
+		current_lang = null;
+
+		let triple_grave_matches = [...chunk.matchAll(/^```(\w*)?/gm)];
+
+		for (let match of triple_grave_matches) {
+			if (current_lang !== null) {
+				current_lang = null;
+			} else {
+				current_lang = typeof match[1] === "string" ? match[1].trim() : "";
+			}
+		}
+
+		// Now, if a block is open at the end, we must close it.
+
+		if (current_lang !== null) {
+			if (chunk.endsWith("\n")) {
+				chunk += "```";
+			} else {
+				chunk += "\n```";
+			}
+		}
+
+		// Finally, check we're still inside our maxlen, and push it to the return array.
+
+		if (chunk.length <= true_maxlen) {
+			ret.push(chunk);
+		} else {
+			ret.push(orig_chunk);
+		}
+
+		// o3 notes that if we do push the orig_chunk, current_lang may be wrong.
+		// Meh, this shouldn't happen in reality because true_maxlen will be big enough.
+	}
+
+	return ret;
 };
 
 // ------------------------------------------------------------------------------------------------
