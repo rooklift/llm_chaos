@@ -101,7 +101,7 @@ exports.split_text_into_chunks = function(text, maxlen) {			// Written by Claude
 	chunks = chunks.map(s => s.trim()).filter(s => s !== "");
 
 	// Process code blocks that might be split across chunks, passing the true maxlen
-	return fix_code_blocks(chunks, true_maxlen);
+	return exports.fix_code_blocks(chunks, true_maxlen);
 };
 
 exports.split_paragraph = function(paragraph, maxlen) {			// Written by Claude.
@@ -154,84 +154,76 @@ exports.split_paragraph = function(paragraph, maxlen) {			// Written by Claude.
 	return chunks;
 };
 
-function fix_code_blocks(chunks, true_maxlen) {					// Written by Claude.
+exports.fix_code_blocks = function (chunks, true_maxlen) {		// Written by o3
 
-	if (chunks.length <= 1) {
-		return chunks;
-	}
+/**
+ * Fixes unbalanced Markdown ``` fences created when long text is split into
+ * separate Discord messages.   The algorithm guarantees that **each individual
+ * chunk is a well‑formed message** (an even number of triple‑backtick fences)
+ * while preserving the original language spec where possible.
+ *
+ * Strategy in brief:
+ *   1. Track whether the previous chunk ended *inside* a code‑block.  If so we
+ *      reopen that block at the start of the next chunk.
+ *   2. Count every ``` fence in the current chunk to see whether we are still
+ *      inside a block when we reach the end.
+ *   3. If the block is still open, append a closing fence (space permitting)
+ *      and remember the language so it can be reopened in the following chunk.
+ *
+ * @param {string[]} chunks      – output of split_text_into_chunks before repair
+ * @param {number}   true_maxlen – *full* per‑message limit (not the reduced
+ *                                value that split_text_into_chunks works with)
+ * @returns {string[]}           – chunks with balanced code fences
+ */
 
-	let result = [];
-	let openCodeBlock = null;
+	if (!Array.isArray(chunks) || chunks.length <= 1) return chunks;
 
-	for (let i = 0; i < chunks.length; i++) {
-		let chunk = chunks[i];
+	const result = [];
+	let reopenLang = null;                // language to reopen in next chunk
 
-		// Check if this chunk ends with an unclosed code block
-		let codeBlockMatches = chunk.match(/^```(\w*)[^`]*$/m);
-		let endsWithUnclosedCodeBlock = codeBlockMatches && !chunk.endsWith("```");
-
-		if (endsWithUnclosedCodeBlock) {
-			// Store the language if specified
-			openCodeBlock = codeBlockMatches[1] || "";
-
-			// Close the code block at the end of this chunk
-			let modified_chunk = chunk + "\n```";
-
-			// Check if it's still within maxlen
-			if (modified_chunk.length <= true_maxlen) {
-				result.push(modified_chunk);
-			} else {
-				// Fallback to using the original chunk in this case
-				result.push(chunk);
-			}
-		} else if (openCodeBlock !== null && i > 0) {
-			// This chunk continues a code block from the previous chunk
-			// Prepend a code block marker with the same language
-			let languageSpec = openCodeBlock ? openCodeBlock : "";
-			let modified_chunk = "```" + languageSpec + "\n" + chunk;
-
-			// Check if it's within maxlen
-			if (modified_chunk.length <= true_maxlen) {
-				result.push(modified_chunk);
-			} else {
-				// Fallback to simpler opening (no language spec) if too long
-				modified_chunk = "```\n" + chunk;
-				if (modified_chunk.length <= true_maxlen) {
-					result.push(modified_chunk);
-				} else {
-					result.push(chunk);
-				}
-			}
-
-			// Reset openCodeBlock if this chunk ends with ```
-			if (chunk.endsWith("```")) {
-				openCodeBlock = null;
-			}
-		} else {
-			result.push(chunk);
-
-			// Check if this chunk opened and closed code blocks
-			let closedBlocks = (chunk.match(/```/g) || []).length;
-			if (closedBlocks % 2 !== 0) {
-				// Odd number of ``` markers means we have an unclosed block at the end
-				let lastOpenPos = chunk.lastIndexOf("```");
-				let language = "";
-
-				// Extract language if specified
-				let languageMatch = chunk.substring(lastOpenPos).match(/```(\w*)/);
-				if (languageMatch) {
-					language = languageMatch[1];
-				}
-
-				openCodeBlock = language;
-			} else {
-				openCodeBlock = null;
+	for (let chunk of chunks) {
+		// 1. Re‑open if we previously closed a block purely because of length
+		if (reopenLang !== null) {
+			const opener = "```" + (reopenLang || "") + "\n";
+			if (chunk.length + opener.length <= true_maxlen) {
+				chunk = opener + chunk;
+			} else if (chunk.length + 4 <= true_maxlen) {   // fallback w/out lang
+				chunk = "```\n" + chunk;
 			}
 		}
+
+		// 2. Scan every ``` fence in the chunk and toggle an in‑block flag
+		const fences = [...chunk.matchAll(/```(\w*)?/g)];
+		let inBlock = false;
+		let currentLang = reopenLang;      // carry‑over from step 1 if any
+
+		for (const match of fences) {
+			if (inBlock) {
+				inBlock = false;          // this fence closes the block
+				currentLang = null;
+			} else {
+				inBlock = true;           // this fence opens the block
+				currentLang = match[1] ?? "";
+			}
+		}
+
+		// 3. If the block is still open when we reach the end of the chunk,
+		//    close it so each Discord message stands on its own.
+		if (inBlock) {
+			if (chunk.length + 4 <= true_maxlen) {
+				chunk += "\n```";        // close it now…
+			}
+			// ...but remember to reopen it in the next chunk.
+			reopenLang = currentLang;
+		} else {
+			reopenLang = null;
+		}
+
+		result.push(chunk);
 	}
 
 	return result;
-}
+};
 
 // ------------------------------------------------------------------------------------------------
 
