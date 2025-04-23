@@ -174,7 +174,7 @@ exports.fix_code_blocks = function(chunks, true_maxlen) {		// Somewhat human-wri
 
 		current_lang = null;
 
-		let triple_grave_matches = [...chunk.matchAll(/^```(\w*)?/gm)];
+		let triple_grave_matches = Array.from(chunk.matchAll(/^```(\w*)?/gm));		// matchAll returns an iterator.
 
 		for (let match of triple_grave_matches) {
 			if (current_lang !== null) {
