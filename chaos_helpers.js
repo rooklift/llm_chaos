@@ -154,11 +154,7 @@ exports.split_paragraph = function(paragraph, maxlen) {			// Written by Claude.
 	return chunks;
 };
 
-exports.fix_code_blocks = function(chunks, true_maxlen) {		// Idea by o3, but somewhat human written.
-
-	if (chunks.length <= 1) {
-		return chunks;
-	}
+exports.fix_code_blocks = function(chunks, true_maxlen) {		// Somewhat human-written. Idea by o3.
 
 	let ret = [];
 	let current_lang = null;		// null for none, any string including "" for something
