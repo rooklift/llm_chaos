@@ -98,7 +98,7 @@ exports.split_text_into_chunks = function(text, maxlen) {			// Written by Claude
 		chunks.push(current_chunk);
 	}
 
-	chunks = chunks.map(s => s.trim()).filter(s => s !== "");
+	chunks = chunks.filter(s => s.trim() !== "");
 
 	// Process code blocks that might be split across chunks, passing the true maxlen
 	return exports.fix_code_blocks(chunks, true_maxlen);
