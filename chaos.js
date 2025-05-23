@@ -180,6 +180,7 @@ const bot_prototype = {
 			"!poll":      [(msg, ...args) =>         this.set_poll_wait(msg, ...args), "Set the polling delay in milliseconds."                            ],
 			"!reload":    [(msg, ...args) =>     this.set_system_prompt(msg, ...args), "Reload the system prompt from disk."                               ],
 			"!reset":     [(msg, ...args) =>                 this.reset(msg, ...args), "Clear the history. Make the LLM use this channel."                 ],
+			"!restrict":  [(msg, ...args) =>        this.set_restricted(msg, ...args), "Set an LLM's restricted status."                                   ],
 			"!retry":     [(msg, ...args) =>                 this.retry(msg, ...args), "Delete the last response from the history and retry."              ],
 			"!show":      [(msg, ...args) =>    this.set_show_reasoning(msg, ...args), "Set / toggle showing reasoning (if available) in the channel."     ],
 			"!status":    [(msg, ...args) =>           this.send_status(msg, ...args), "Display essential bot status info in this channel."                ],
@@ -401,6 +402,21 @@ const bot_prototype = {
 		msg.channel.send(s).catch(error => {
 			console.log(error);
 		});
+	},
+
+	set_restricted: function(msg, val) {
+		if (msg.author.id !== this.owner_id) {
+			this.msg_reply(msg, "Unauthorised attempt to change restricted status!");
+		} else {
+			if (val && ["FALSE", "OFF"].includes(val.toUpperCase())) {
+				this.restricted = false;
+			} else if (val && ["TRUE", "ON"].includes(val.toUpperCase())) {
+				this.restricted = true;
+			} else {
+				this.restricted = !this.restricted;
+			}
+			this.msg_reply(msg, `Restricted: ${this.restricted}`);
+		}
 	},
 
 	set_dollar_budget: function(msg, val) {
