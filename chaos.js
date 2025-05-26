@@ -272,10 +272,23 @@ const bot_prototype = {
 		return this.conn.destroy();							// Which is a promise.
 	},
 
-	set_system_prompt: function(msg = null) {
+	set_system_prompt: function(msg = null, val = null) {
 
 		if (!this.sp_location) {
 			return;											// Should we actually clear it in this case?
+		}
+
+		if (typeof val === "string") {
+			let dirname = path.dirname(this.sp_location);
+			let fullpath = path.join(dirname, val);
+			if (fs.existsSync(fullpath)) {
+				this.sp_location = fullpath;
+			} else {
+				if (msg) {
+					this.msg_reply(msg, `Couldn't find ${val} in same directory as current prompt.`);
+					return;
+				}
+			}
 		}
 
 		let all_llm_info = [];
