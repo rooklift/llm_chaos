@@ -114,8 +114,10 @@ const bot_prototype = {
 				top_header: cfg.top_header ?? common.top_header ?? "",					// System header to include at start of a foreign message block.
 				end_header: cfg.end_header ?? common.end_header ?? "",					// System header to include at end of a foreign message block.
 
-				owner: common.owner,													// Human in charge, for S.P. (use owner_id for important stuff)
-				owner_id: common.owner_id ?? "",										// And their Discord ID as a string
+				owner: common.owner,													// Human in charge, for S.P. (use owner_id for important stuff).
+				owner_id: common.owner_id ?? "",										// And their Discord ID as a string.
+				guilds: common.guilds ?? null,											// If present as an array (of strings), only these guilds will be read.
+
 				chaos: cfg.chaos ?? common.chaos ?? 0,									// Chance of responding randomly to a non-ping.
 				emoji: cfg.emoji ?? common.emoji ?? "💡",								// Emoji used to acknowledge receipt of message.
 				sp_location: cfg.system_prompt ?? common.system_prompt ?? "",			// Location of the system prompt, for (re)loading.
@@ -209,6 +211,12 @@ const bot_prototype = {
 			};
 
 			this.conn.on("messageCreate", (msg) => {
+				if (Array.isArray(this.guilds)) {
+					if (this.guilds.indexOf(msg.guildId) === -1) {
+						this.log(`Got unexpected message from guild ${msg.guildId}`);
+						return;
+					}
+				}
 				update_user_list_from_msg(msg);
 				if (this.msg_is_mine(msg)) {					// Totally ignore own messages.
 					return;
