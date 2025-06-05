@@ -465,8 +465,10 @@ const client_prototype = {
 				return o.usage.output_tokens || 0;
 			}
 			if (typeof o?.usageMetadata?.candidatesTokenCount === "number") {			// Google format
-				this.output_token_method = "candidatesTokenCount";
-				return o.usageMetadata.candidatesTokenCount || 0;
+				this.output_token_method = "candidatesTokenCount + thoughtsTokenCount";
+				let cand_tokens = o.usageMetadata.candidatesTokenCount || 0;
+				let think_tokens = o.usageMetadata.thoughtsTokenCount || 0;
+				return cand_tokens + think_tokens || 0;
 			}
 			if (typeof o?.usage?.completion_tokens === "number") {						// OpenAI "chat completion" format
 				this.output_token_method = "completion_tokens";
