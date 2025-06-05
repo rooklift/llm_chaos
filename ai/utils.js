@@ -45,9 +45,16 @@ exports.parse_200_response_google = function(data) {
 	if (!Array.isArray(parts) || parts.length === 0) {
 		throw new RequestError(200, JSON.stringify(data));
 	}
-	let ret_strings = parts.map(part => {
-		return part?.text || "[response content included unreadable part]";		// part?.text because part could be null I guess.
-	});
+	let ret_strings = [];
+	for (let part of parts) {
+		if (part && typeof part.text === "string") {
+			if (!part.thought) {
+				ret_strings.push(part.text);
+			}
+		} else {
+			ret_strings.push("[response content included unreadable part]");
+		}
+	}
 	return ret_strings.join("\n\n");
 };
 

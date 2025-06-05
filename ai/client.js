@@ -111,7 +111,7 @@ const client_prototype = {
 	},
 
 	set_reasoning_effort: function(s) {
-		if (this.is_anthropic()) {				// reasoning_effort is the OpenAI name, but we can use this hacky translation...
+		if (this.is_anthropic() || this.is_google()) {		// reasoning_effort is the OpenAI name, but we can use this hacky translation...
 			this.set_budget_tokens(s === "high" ? 8192 : (s === "medium" ? 3072 : (s === "low" ? 1024 : 0)));
 		} else {
 			this.config.reasoning_effort = s;
@@ -331,8 +331,15 @@ const client_prototype = {
 			contents: formatted_conversation,
 			generationConfig: {
 				[this.config.max_tokens_key]: this.config.max_tokens,
+				thinkingConfig: {
+					includeThoughts: true
+				}
 			}
 		};
+
+		if (this.config.budget_tokens > 0) {
+			data.generationConfig.thinkingConfig.thinkingBudget = this.config.budget_tokens;
+		}
 
 		if (this.config.system_prompt) {
 			data.system_instruction = {
@@ -406,6 +413,14 @@ const client_prototype = {
 				return thinking_item.thinking.trim() || "";
 			} else if (this.is_openrouter()) {
 				return o.choices[0].message.reasoning.trim() || "";
+			} else if (this.is_google()) {
+				let thoughts = [];
+				for (let part of o.candidates[0].content.parts) {
+					if (part && typeof part.text === "string" && part.thought) {
+						thoughts.push(part.text);
+					}
+				}
+				return thoughts.join("\n\n");
 			} else {
 				return o.choices[0].message.reasoning_content.trim() || "";
 			}
