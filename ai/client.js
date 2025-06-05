@@ -409,17 +409,12 @@ const client_prototype = {
 		try {
 			let o = this.last_receive;
 			if (this.is_anthropic()) {
-				let thinking_item = o.content.find(item => item.type === "thinking");
-				return thinking_item.thinking.trim() || "";
+				let thoughts = o.content.filter(z => z.type === "thinking").map(z => z.thinking);
+				return thoughts.join("\n\n");
 			} else if (this.is_openrouter()) {
 				return o.choices[0].message.reasoning.trim() || "";
 			} else if (this.is_google()) {
-				let thoughts = [];
-				for (let part of o.candidates[0].content.parts) {
-					if (part && typeof part.text === "string" && part.thought) {
-						thoughts.push(part.text);
-					}
-				}
+				let thoughts = o.candidates[0].content.parts.filter(z => z.thought && typeof z.text === "string").map(z => z.text);
 				return thoughts.join("\n\n");
 			} else {
 				return o.choices[0].message.reasoning_content.trim() || "";
