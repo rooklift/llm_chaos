@@ -161,33 +161,34 @@ const bot_prototype = {
 			});
 
 			let commands = {	// Note that the first arg received by all of these will be msg. Then any other args (which most don't use).
-			"!abort":     [(msg, ...args) =>                 this.abort(msg, ...args), "Abort current operation. Bump last_handled marker."                ],
-			"!blind":     [(msg, ...args) =>         this.set_blindness(msg, ...args), "Set / toggle being ping-blind."                                    ],
-			"!break":     [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !abort."                                                 ],
-			"!budget":    [(msg, ...args) =>     this.set_dollar_budget(msg, ...args), "Set the budget in dollars."                                        ],
-			"!chaos":     [(msg, ...args) =>             this.set_chaos(msg, ...args), "Set chaos value (chance of responding to non-pings)."              ],
-			"!config":    [(msg, ...args) =>           this.send_config(msg, ...args), "Display LLM config in this channel."                               ],
-			"!cost":      [(msg, ...args) =>             this.send_cost(msg, ...args), "Display estimated costs in this channel."                          ],
-			"!costs":     [(msg, ...args) =>             this.send_cost(msg, ...args), "Alias for !cost."                                                  ],
-			"!disconnect":[(msg, ...args) =>            this.disconnect(msg, ...args), "Just like it sounds."                                              ],
-			"!effort":    [(msg, ...args) =>  this.set_reasoning_effort(msg, ...args), "Set reasoning effort (low / medium / high). Leave blank to clear." ],
-			"!help":      [(msg, ...args) =>                       help(msg, ...args), "Display this message."                                             ],
-			"!history":   [(msg, ...args) =>          this.dump_history(msg, ...args), "Dump the internal history to the console."                         ],
-			"!input":     [(msg, ...args) =>        this.log_last_input(msg, ...args), "Dump the last body sent to the LLM's API to the console."          ],
-			"!lock":      [(msg, ...args) =>     this.set_max_lock_time(msg, ...args), "Set the system-wide max_lock_time."                                ],
-			"!lockbuffer":[(msg, ...args) =>  this.set_lock_buffer_time(msg, ...args), "Set the system-wide lock_buffer_time."                             ],
-			"!manager":   [(msg, ...args) =>    this.send_manager_debug(msg, ...args), "Display the state of the manager in this channel."                 ],
-			"!memory":    [(msg, ...args) =>     this.set_history_limit(msg, ...args), "Set the number of messages saved in the history."                  ],
-			"!output":    [(msg, ...args) =>       this.log_last_output(msg, ...args), "Dump the last body received from the LLM's API to the console."    ],
-			"!poll":      [(msg, ...args) =>         this.set_poll_wait(msg, ...args), "Set the polling delay in milliseconds."                            ],
-			"!reload":    [(msg, ...args) =>     this.set_system_prompt(msg, ...args), "Reload the system prompt from disk."                               ],
-			"!reset":     [(msg, ...args) =>                 this.reset(msg, ...args), "Clear the history. Make the LLM use this channel."                 ],
-			"!restrict":  [(msg, ...args) =>        this.set_restricted(msg, ...args), "Set an LLM's restricted status."                                   ],
-			"!retry":     [(msg, ...args) =>                 this.retry(msg, ...args), "Delete the last response from the history and retry."              ],
-			"!show":      [(msg, ...args) =>    this.set_show_reasoning(msg, ...args), "Set / toggle showing reasoning (if available) in the channel."     ],
-			"!status":    [(msg, ...args) =>           this.send_status(msg, ...args), "Display essential bot status info in this channel."                ],
-			"!system":    [(msg, ...args) =>    this.dump_system_prompt(msg, ...args), "Dump the system prompt to the console."                            ],
-			"!tokens":    [(msg, ...args) =>        this.set_max_tokens(msg, ...args), "Set max_tokens for the LLM."                                       ],
+			"!abort":      [(msg, ...args) =>                 this.abort(msg, ...args), "Abort current operation. Bump last_handled marker."                ],
+			"!blind":      [(msg, ...args) =>         this.set_blindness(msg, ...args), "Set / toggle being ping-blind."                                    ],
+			"!break":      [(msg, ...args) =>                 this.abort(msg, ...args), "Alias for !abort."                                                 ],
+			"!budget":     [(msg, ...args) =>     this.set_dollar_budget(msg, ...args), "Set the budget in dollars."                                        ],
+			"!chaos":      [(msg, ...args) =>             this.set_chaos(msg, ...args), "Set chaos value (chance of responding to non-pings)."              ],
+			"!config":     [(msg, ...args) =>           this.send_config(msg, ...args), "Display LLM config in this channel."                               ],
+			"!cost":       [(msg, ...args) =>             this.send_cost(msg, ...args), "Display estimated costs in this channel."                          ],
+			"!costs":      [(msg, ...args) =>             this.send_cost(msg, ...args), "Alias for !cost."                                                  ],
+			"!disconnect": [(msg, ...args) =>            this.disconnect(msg, ...args), "Just like it sounds."                                              ],
+			"!effort":     [(msg, ...args) =>  this.set_reasoning_effort(msg, ...args), "Set reasoning effort (low / medium / high). Leave blank to clear." ],
+			"!help":       [(msg, ...args) =>                       help(msg, ...args), "Display this message."                                             ],
+			"!history":    [(msg, ...args) =>          this.dump_history(msg, ...args), "Dump the internal history to the console."                         ],
+			"!input":      [(msg, ...args) =>        this.log_last_input(msg, ...args), "Dump the last body sent to the LLM's API to the console."          ],
+			"!lock":       [(msg, ...args) =>     this.set_max_lock_time(msg, ...args), "Set the system-wide max_lock_time."                                ],
+			"!lockbuffer": [(msg, ...args) =>  this.set_lock_buffer_time(msg, ...args), "Set the system-wide lock_buffer_time."                             ],
+			"!manager":    [(msg, ...args) =>    this.send_manager_debug(msg, ...args), "Display the state of the manager in this channel."                 ],
+			"!memory":     [(msg, ...args) =>     this.set_history_limit(msg, ...args), "Set the number of messages saved in the history."                  ],
+			"!output":     [(msg, ...args) =>       this.log_last_output(msg, ...args), "Dump the last body received from the LLM's API to the console."    ],
+			"!poll":       [(msg, ...args) =>         this.set_poll_wait(msg, ...args), "Set the polling delay in milliseconds."                            ],
+			"!reload":     [(msg, ...args) =>     this.set_system_prompt(msg, ...args), "Reload the system prompt from disk."                               ],
+			"!reset":      [(msg, ...args) =>                 this.reset(msg, ...args), "Clear the history. Make the LLM use this channel."                 ],
+			"!restrict":   [(msg, ...args) =>        this.set_restricted(msg, ...args), "Set an LLM's restricted status."                                   ],
+			"!retry":      [(msg, ...args) =>                 this.retry(msg, ...args), "Delete the last response from the history and retry."              ],
+			"!show":       [(msg, ...args) =>    this.set_show_reasoning(msg, ...args), "Set / toggle showing reasoning (if available) in the channel."     ],
+			"!status":     [(msg, ...args) =>           this.send_status(msg, ...args), "Display essential bot status info in this channel."                ],
+			"!system":     [(msg, ...args) =>    this.dump_system_prompt(msg, ...args), "Dump the system prompt to the console."                            ],
+			"!temperature":[(msg, ...args) =>       this.set_temperature(msg, ...args), "Set the temperature for the LLM."                                  ],
+			"!tokens":     [(msg, ...args) =>        this.set_max_tokens(msg, ...args), "Set max_tokens for the LLM."                                       ],
 			};
 
 			let broadcast_commands = ["!abort", "!break", "!reset"];					// Commands that can be sent untargetted.
@@ -492,6 +493,17 @@ const bot_prototype = {
 			this.msg_reply(msg, `Budget tokens: ${n > 0 ? n : "default / won't send the field"}`);
 		} else {
 			this.msg_reply(msg, `Reasoning effort: ${s ? s : "default / won't send the field"}`);
+		}
+	},
+
+	set_temperature: function(msg, val) {
+		let n = parseFloat(val);
+		if (Number.isNaN(n) || n <= 0) {
+			this.ai_client.set_temperature(-1);
+			this.msg_reply(msg, `Temperature: default / won't send the field`);
+		} else {
+			this.ai_client.set_temperature(n);
+			this.msg_reply(msg, `Temperature: ${n}`);
 		}
 	},
 
