@@ -481,14 +481,14 @@ const bot_prototype = {
 		let as_num = parseInt(val);
 		let s = "";
 
-		if ((this.ai_client.is_anthropic() || this.ai_client.is_google()) && !Number.isNaN(as_num)) {
+		if ((this.ai_client.config.use_numeric_budget) && !Number.isNaN(as_num)) {
 			this.ai_client.set_budget_tokens(as_num);
 		} else {
 			s = (typeof val === "string" && ["low", "medium", "high"].includes(val.toLowerCase())) ? val.toLowerCase() : "";
 			this.ai_client.set_reasoning_effort(s);
 		}
 
-		if (this.ai_client.is_anthropic() || this.ai_client.is_google()) {
+		if (this.ai_client.config.use_numeric_budget) {
 			let n = this.ai_client.config.budget_tokens;
 			this.msg_reply(msg, `Budget tokens: ${n > 0 ? n : "default / won't send the field"}`);
 		} else {

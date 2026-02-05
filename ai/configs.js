@@ -16,6 +16,7 @@ exports.Defaults = {
 	full_name: "",					// Mostly for system prompts. If unset, is auto-set to name.
 
 	max_tokens_key: "max_tokens",	// The key used in the data object when specifying the max tokens value; OpenAI deprecated "max_tokens"
+	use_numeric_budget: false,		// Whether reasoning budget should be given as a number - true of Google and older Anthropic models
 	sp_role: "system",				// The role for IN-ARRAY system prompt messages, typically "system" but maybe "developer" or "user"
 
 	max_tokens: 8192,

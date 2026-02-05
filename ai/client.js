@@ -111,7 +111,7 @@ const client_prototype = {
 	},
 
 	set_reasoning_effort: function(s) {
-		if (this.is_anthropic() || this.is_google()) {		// reasoning_effort is the OpenAI name, but we can use this hacky translation...
+		if (this.config.use_numeric_budget) {
 			this.set_budget_tokens(s === "high" ? 8192 : (s === "medium" ? 3072 : (s === "low" ? 1024 : 0)));
 		} else {
 			this.config.reasoning_effort = s;
@@ -119,6 +119,9 @@ const client_prototype = {
 	},
 
 	set_budget_tokens: function(n) {
+		if (!this.config.use_numeric_budget) {
+			throw new Error("set_budget_tokens: config does not say this model can accept a numeric reasoning budget.");
+		}
 		this.config.budget_tokens = n;
 	},
 
@@ -189,8 +192,15 @@ const client_prototype = {
 
 		if (this.config.budget_tokens > 0) {
 			data.thinking = {
+				type: "enabled",
 				budget_tokens: this.config.budget_tokens,
-				type: "enabled"
+			};
+		} else if (this.config.reasoning_effort) {
+			data.thinking = {
+				type: "adaptive"
+			};
+			data.output_config = {
+				effort: this.config.reasoning_effort
 			};
 		}
 
