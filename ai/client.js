@@ -45,6 +45,10 @@ function new_client(cfg) {
 		client.config.company = "Unknown Company";
 	}
 
+	if (client.config.use_numeric_budget && !client.config.budget_tokens && client.config.reasoning_effort) {
+		client.set_reasoning_effort(client.config.reasoning_effort);		// Does the conversion to budget_tokens
+	}
+
 	let api_key = "unset";								// Closure technique to keep api_key secret.
 	client.get_api_key = () => api_key;
 	client.set_api_key = (s) => {
@@ -115,6 +119,7 @@ const client_prototype = {
 			this.set_budget_tokens(s === "high" ? 8192 : (s === "medium" ? 3072 : (s === "low" ? 1024 : 0)));
 		} else {
 			this.config.reasoning_effort = s;
+			this.config.budget_tokens = 0;
 		}
 	},
 
@@ -123,6 +128,7 @@ const client_prototype = {
 			throw new Error("set_budget_tokens: config does not say this model can accept a numeric reasoning budget.");
 		}
 		this.config.budget_tokens = n;
+		this.config.reasoning_effort = "";
 	},
 
 	register_success: function() {
