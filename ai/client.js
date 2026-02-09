@@ -413,7 +413,7 @@ const client_prototype = {
 
 	prepare_request: function(conversation, raw) {				// raw flag means conversation is preformatted
 		let { formatter, maker } = this.get_handlers();
-		return maker(raw ? conversation : formatter(conversation));
+		return maker(raw ? Array.from(conversation) : formatter(conversation));		// Array.from() to make a copy (so it doesn't get mutated by sys prompt)
 	},
 
 	parse_200_response: function(data) {
