@@ -141,8 +141,8 @@ const client_prototype = {
 		this.errors += 1;
 	},
 
-	send_message: function(message, abortcontroller = null) {
-		return this.send_conversation([message], false, abortcontroller);
+	send_message: function(message, abortcontroller = null, suppress_sp = false) {
+		return this.send_conversation([message], false, abortcontroller, suppress_sp);
 	},
 
 	is_anthropic: function() {
@@ -175,7 +175,7 @@ const client_prototype = {
 		}
 	},
 
-	anthropic_request: function(formatted_conversation) {
+	anthropic_request: function(formatted_conversation, suppress_sp) {
 		let headers = {
 			"x-api-key": this.get_api_key(),
 			"anthropic-version": this.config.anthropic_version,
@@ -188,7 +188,7 @@ const client_prototype = {
 			[this.config.max_tokens_key]: this.config.max_tokens,
 		};
 
-		if (this.config.system_prompt) {
+		if (!suppress_sp && this.config.system_prompt) {
 			data.system = this.config.system_prompt;
 		}
 
@@ -213,7 +213,7 @@ const client_prototype = {
 		return [headers, data];
 	},
 
-	openai_chat_api_request: function(formatted_conversation) {
+	openai_chat_api_request: function(formatted_conversation, suppress_sp) {
 		let headers = {
 			"authorization": `Bearer ${this.get_api_key()}`,
 			"content-type": "application/json",
@@ -226,7 +226,7 @@ const client_prototype = {
 			store: false,
 		};
 
-		if (this.config.system_prompt) {				// For OpenAI, System prompt is first message.
+		if (!suppress_sp && this.config.system_prompt) {			// For OpenAI, System prompt is first message.
 			data.messages.unshift({
 				role: this.config.sp_role,
 				content: this.config.system_prompt
@@ -250,7 +250,7 @@ const client_prototype = {
 		return [headers, data];
 	},
 
-	openai_responses_api_request: function(formatted_conversation) {
+	openai_responses_api_request: function(formatted_conversation, suppress_sp) {
 		let headers = {
 			"authorization": `Bearer ${this.get_api_key()}`,
 			"content-type": "application/json",
@@ -263,7 +263,7 @@ const client_prototype = {
 			store: false,
 		};
 
-		if (this.config.system_prompt) {				// System prompt is first message.
+		if (!suppress_sp && this.config.system_prompt) {			// System prompt is first message.
 			data.input.unshift({
 				role: this.config.sp_role,
 				content: this.config.system_prompt
@@ -294,7 +294,7 @@ const client_prototype = {
 		return [headers, data];
 	},
 
-	openrouter_request: function(formatted_conversation) {
+	openrouter_request: function(formatted_conversation, suppress_sp) {
 		let headers = {
 			"authorization": `Bearer ${this.get_api_key()}`,
 			"content-type": "application/json",
@@ -306,7 +306,7 @@ const client_prototype = {
 			[this.config.max_tokens_key]: this.config.max_tokens,
 		};
 
-		if (this.config.system_prompt) {				// System prompt is first message.
+		if (!suppress_sp && this.config.system_prompt) {			// System prompt is first message.
 			data.messages.unshift({
 				role: this.config.sp_role,
 				content: this.config.system_prompt
@@ -337,7 +337,7 @@ const client_prototype = {
 		return [headers, data];
 	},
 
-	google_request: function(formatted_conversation) {
+	google_request: function(formatted_conversation, suppress_sp) {
 		let headers = {
 			"x-goog-api-key": this.get_api_key(),
 			"content-type": "application/json",
@@ -357,7 +357,7 @@ const client_prototype = {
 			data.generationConfig.thinkingConfig.thinkingBudget = this.config.budget_tokens;
 		}
 
-		if (this.config.system_prompt) {
+		if (!suppress_sp && this.config.system_prompt) {
 			data.system_instruction = {
 				parts: [{ text: this.config.system_prompt }]
 			};
@@ -411,9 +411,10 @@ const client_prototype = {
 		};
 	},
 
-	prepare_request: function(conversation, raw) {				// raw flag means conversation is preformatted
+	prepare_request: function(conversation, raw, suppress_sp) {				// raw flag means conversation is preformatted
 		let { formatter, maker } = this.get_handlers();
-		return maker(raw ? Array.from(conversation) : formatter(conversation));		// Array.from() to make a copy (so it doesn't get mutated by sys prompt)
+		let formatted_conversation = raw ? Array.from(conversation) : formatter(conversation);
+		return maker(formatted_conversation, suppress_sp);
 	},
 
 	parse_200_response: function(data) {
@@ -493,7 +494,7 @@ const client_prototype = {
 		}
 	},
 
-	send_conversation: function(conversation, raw = false, abortcontroller = null) {
+	send_conversation: function(conversation, raw = false, abortcontroller = null, suppress_sp = false) {
 
 		this.last_send = null;
 		this.last_receive = null;
@@ -525,7 +526,7 @@ const client_prototype = {
 		}
 
 		return delay_promise.then(() => {
-			let [headers, data] = this.prepare_request(conversation, raw);
+			let [headers, data] = this.prepare_request(conversation, raw, suppress_sp);
 			this.last_send = data;
 			return fetch(this.config.url, {
 				method: "POST",
