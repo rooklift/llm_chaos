@@ -357,6 +357,10 @@ const client_prototype = {
 			data.generationConfig.thinkingConfig.thinkingBudget = this.config.budget_tokens;
 		}
 
+		if (this.config.reasoning_effort) {
+			data.generationConfig.thinkingConfig.thinkingLevel = this.config.reasoning_effort;
+		}
+
 		if (!suppress_sp && this.config.system_prompt) {
 			data.system_instruction = {
 				parts: [{ text: this.config.system_prompt }]
