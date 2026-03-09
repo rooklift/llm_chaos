@@ -209,6 +209,10 @@ exports.fix_code_blocks = function(chunks, true_maxlen) {		// Somewhat human-wri
 	return ret;
 };
 
+exports.fix_thinking_triple_ticks = function(s) {
+	return s.replace(/```/g, "`\u200B``");
+}
+
 // ------------------------------------------------------------------------------------------------
 
 exports.probably_text = function(content_type) {

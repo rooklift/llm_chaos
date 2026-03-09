@@ -870,8 +870,9 @@ const bot_prototype = {
 
 			let think = this.ai_client.get_last_think();								// think will be "" if not available.
 			if (think) {
-				think_chunks = helpers.split_text_into_chunks(think, 1970);				// Some margin of characters to add stuff.
+				think_chunks = helpers.split_text_into_chunks(think, 1950);				// Some margin of characters to add stuff.
 				for (let i = 0; i < think_chunks.length; i++) {
+					think_chunks[i] = helpers.fix_thinking_triple_ticks(think_chunks[i]);
 					think_chunks[i] = "💭\n```\n" + think_chunks[i] + "\n```";			// 💭 at start of every chunk so other bots ignore it.
 				}
 				think_chunks[think_chunks.length - 1] += "\n⇨";							// Only at the end of the last think chunk.
