@@ -434,6 +434,9 @@ const client_prototype = {
 			let o = this.last_receive;
 			if (this.is_anthropic()) {
 				let thoughts = o.content.filter(z => z.type === "thinking").map(z => z.thinking);
+				if (o.content.some(z => z.type === "redacted_thinking")) {
+					thoughts.push("[Some thinking was redacted!]");
+				}
 				return thoughts.join("\n\n");
 			} else if (this.is_openrouter()) {
 				return o.choices[0].message.reasoning.trim() || "";
