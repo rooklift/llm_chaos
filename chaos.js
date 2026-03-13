@@ -1060,12 +1060,40 @@ const bot_prototype = {
 		this.log(this.ai_client.config.system_prompt);
 	},
 
-	log_last_input: function() {
-		this.log(JSON.stringify(this.ai_client.last_send, null, 4));
+	log_last_input: function(msg, val = null) {
+		if (typeof val === "undefined" || val === null) {
+			this.log(JSON.stringify(this.ai_client.last_send, null, 4));
+			return;
+		}
+		let n = parseInt(val);
+		if (Number.isNaN(n) || n >= 0) {
+			this.msg_reply(msg, "Error: argument must be a non-zero negative integer.");
+			return;
+		}
+		let o = this.ai_client.send_log[this.ai_client.send_log.length + n];
+		if (typeof o === "undefined") {
+			this.msg_reply(msg, "Error: requested input history entry is not available.");
+			return;
+		}
+		this.log(JSON.stringify(o, null, 4));
 	},
 
-	log_last_output: function() {
-		this.log(JSON.stringify(this.ai_client.last_receive, null, 4));
+	log_last_output: function(msg, val = null) {
+		if (typeof val === "undefined" || val === null) {
+			this.log(JSON.stringify(this.ai_client.last_receive, null, 4));
+			return;
+		}
+		let n = parseInt(val);
+		if (Number.isNaN(n) || n >= 0) {
+			this.msg_reply(msg, "Error: argument must be a non-zero negative integer.");
+			return;
+		}
+		let o = this.ai_client.receive_log[this.ai_client.receive_log.length + n];
+		if (typeof o === "undefined") {
+			this.msg_reply(msg, "Error: requested output history entry is not available.");
+			return;
+		}
+		this.log(JSON.stringify(o, null, 4));
 	},
 };
 
