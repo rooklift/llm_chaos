@@ -64,6 +64,9 @@ function new_client(cfg) {
 	client.last_send = null;
 	client.last_receive = null;
 
+	client.send_log = [];			// TODO
+	client.receive_log = [];		// TODO
+
 	client.output_token_method = "";					// An info string of how output tokens are being counted.
 
 	return client;
@@ -532,6 +535,10 @@ const client_prototype = {
 		return delay_promise.then(() => {
 			let [headers, data] = this.prepare_request(conversation, raw, suppress_sp);
 			this.last_send = data;
+			this.send_log.push(data);
+			if (this.send_log.length > 5) {
+				this.send_log.shift();
+			}
 			return fetch(this.config.url, {
 				method: "POST",
 				headers: headers,
@@ -553,6 +560,10 @@ const client_prototype = {
 			} else {
 				return response.json().then(data => {
 					this.last_receive = data;
+					this.receive_log.push(data);
+					if (this.receive_log.length > 5) {
+						this.receive_log.shift();
+					}
 					return this.parse_200_response(data);
 				}).then(result => {						// result is a string.
 					this.register_success();
