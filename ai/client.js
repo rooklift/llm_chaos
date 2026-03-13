@@ -64,8 +64,8 @@ function new_client(cfg) {
 	client.last_send = null;
 	client.last_receive = null;
 
-	client.send_log = [];			// TODO
-	client.receive_log = [];		// TODO
+	client.send_log = [];
+	client.receive_log = [];
 
 	client.output_token_method = "";					// An info string of how output tokens are being counted.
 
