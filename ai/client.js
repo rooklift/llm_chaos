@@ -434,6 +434,9 @@ const client_prototype = {
 			let o = this.last_receive;
 			if (this.is_anthropic()) {
 				let thoughts = o.content.filter(z => z.type === "thinking").map(z => z.thinking);
+				if (thoughts.length > 1) {
+					thoughts.push("[Multiple thinking blocks found - this may be a bugged parse!]");
+				}
 				if (o.content.some(z => z.type === "redacted_thinking")) {
 					thoughts.push("[Some thinking was redacted!]");
 				}
