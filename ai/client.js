@@ -206,7 +206,8 @@ const client_prototype = {
 			};
 		} else if (this.config.reasoning_effort) {
 			data.thinking = {
-				type: "adaptive"
+				type: "adaptive",
+				display: "summarized",
 			};
 			data.output_config = {
 				effort: this.config.reasoning_effort
@@ -445,6 +446,19 @@ const client_prototype = {
 				return o.choices[0].message.reasoning.trim() || "";
 			} else if (this.is_google()) {
 				let thoughts = o.candidates[0].content.parts.filter(z => z.thought && typeof z.text === "string").map(z => z.text);
+				return thoughts.join("\n\n");
+			} else if (this.is_openai_responses_api()) {
+				// Not being validated with OpenAI, I'm not sure I've ever actually received such a thing to test this.
+				let thoughts = [];
+				for (let item of o.output) {
+					if (item.type === "reasoning") {
+						for (let sm of item.summary) {
+							if (sm.type === "summary_text" && sm.text) {
+								thoughts.push(sm.text);
+							}
+						}
+					}
+				}
 				return thoughts.join("\n\n");
 			} else {
 				return o.choices[0].message.reasoning_content.trim() || "";
