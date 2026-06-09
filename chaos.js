@@ -14,6 +14,8 @@ const STEGANOGRAPHY_PREFIXES = ["💭"];		// Any message starting with one of th
 const CHAR_TOKEN_RATIO = 3.6;				// For token estimates and cost estimates.
 const DEFAULT_BUDGET = 50;					// Won't do anything if prices aren't accurately set in the config.
 
+const ABORT_COUNT_INCREMENTED_RESPONSE_ERROR = "Was going to make a response but: abort count was incremented!";
+
 // ------------------------------------------------------------------------------------------------
 
 let bots = [];
@@ -90,6 +92,10 @@ function create_text_and_attachments(text) {				// Regex by GPT-4o
 	let built_arr = files.map(a => new discord.AttachmentBuilder(Buffer.from(a.content), {name: a.filename}));
 
 	return [text.trim(), built_arr];
+}
+
+function should_suppress_channel_error(error) {
+	return error instanceof Error && error.message === ABORT_COUNT_INCREMENTED_RESPONSE_ERROR;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -822,7 +828,7 @@ const bot_prototype = {
 			if (!this.channel) {
 				throw new Error("Was going to make a response but: no channel!");
 			} else if (this.abort_count > abort_count) {
-				throw new Error("Was going to make a response but: abort count was incremented!");
+				throw new Error(ABORT_COUNT_INCREMENTED_RESPONSE_ERROR);
 			} else if (this.history.length === 0) {
 				throw new Error("Was going to make a response but: history was cleared!");
 			} else if (this.history[this.history.length - 1].from_me) {
@@ -943,7 +949,7 @@ const bot_prototype = {
 
 			this.log(error);
 
-			if (this.channel) {
+			if (this.channel && !should_suppress_channel_error(error)) {
 				this.channel.send(error.toString().slice(0, 1999)).catch(discord_error => {		// Not part of main promise chain.
 					console.log(discord_error);
 				});
