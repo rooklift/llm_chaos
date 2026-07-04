@@ -509,7 +509,7 @@ const bot_prototype = {
 
 	set_temperature: function(msg, val) {
 		let n = parseFloat(val);
-		if (Number.isNaN(n) || n <= 0) {
+		if (Number.isNaN(n) || n < 0) {
 			this.ai_client.set_temperature(-1);
 			this.msg_reply(msg, `Temperature: default / won't send the field`);
 		} else {
