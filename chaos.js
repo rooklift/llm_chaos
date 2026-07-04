@@ -1138,7 +1138,8 @@ function ping_converter(s) {
 	// Sort by length (longest first) in case two usernames have the same start...
 	const sortedEntries = Object.entries(username_id_map).sort((a, b) => b[0].length - a[0].length);
 	for (let [username, id] of sortedEntries) {
-		s = s.replace(new RegExp(`@${username}`, "g"), `<@${id}>`);
+		let escaped = username.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		s = s.replace(new RegExp(`@${escaped}`, "g"), `<@${id}>`);
 	}
 	return s;
 }
