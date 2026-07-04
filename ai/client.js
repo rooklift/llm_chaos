@@ -136,6 +136,9 @@ const client_prototype = {
 
 	register_success: function() {
 		this.delay = utils.clamp(this.config.min_delay, this.delay / 2, this.config.max_delay);
+		if (this.errors > 0) {
+			this.errors -= 1;		// Of course this is no longer a real count of errors.
+		}
 	},
 
 	register_failure: function() {
