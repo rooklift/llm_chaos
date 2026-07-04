@@ -296,13 +296,18 @@ const bot_prototype = {
 		if (typeof val === "string") {
 			let dirname = path.dirname(this.sp_location);
 			let fullpath = path.join(dirname, val);
-			if (fs.existsSync(fullpath)) {
-				this.sp_location = fullpath;
-			} else {
+			if (path.dirname(fullpath) !== dirname) {
+				if (msg) {
+					this.msg_reply(msg, `Refused to load a system prompt in a different directory.`);
+					return;
+				}
+			} else if (!fs.existsSync(fullpath)) {
 				if (msg) {
 					this.msg_reply(msg, `Couldn't find ${val} in same directory as current prompt.`);
 					return;
 				}
+			} else {
+				this.sp_location = fullpath;
 			}
 		}
 
