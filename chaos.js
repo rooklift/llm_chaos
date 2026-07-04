@@ -577,7 +577,7 @@ const bot_prototype = {
 	set_lock_buffer_time: function(msg, val) {
 		let n = parseInt(val);
 		if (Number.isNaN(n) || n < 0) {
-			this.msg_reply(msg, `Invalid argument (current value: ${manager.set_lock_buffer_time})`);
+			this.msg_reply(msg, `Invalid argument (current value: ${manager.lock_buffer_time})`);
 		} else {
 			manager.set_lock_buffer_time(n);
 			this.msg_reply(msg, `System-wide lock buffer time: ${n}`);
