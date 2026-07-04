@@ -295,8 +295,8 @@ const bot_prototype = {
 
 		if (typeof val === "string") {
 			let dirname = path.dirname(this.sp_location);
-			let fullpath = path.join(dirname, val);
-			if (path.dirname(fullpath) !== dirname) {
+			let fullpath = path.join(dirname, val);			// Note that join does a normalize implicitly.
+			if (path.dirname(fullpath) !== path.normalize(dirname)) {
 				if (msg) {
 					this.msg_reply(msg, `Refused to load a system prompt in a different directory.`);
 				}
