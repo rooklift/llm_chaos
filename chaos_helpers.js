@@ -21,7 +21,6 @@ exports.fetcher = function(url, options = {}) {		// Must always return a promise
 		fetcher_promises[url] = fetch(url, options).then(response => {
 
 			if (!response.ok) {
-				delete fetcher_promises[url];
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
 
@@ -30,6 +29,12 @@ exports.fetcher = function(url, options = {}) {		// Must always return a promise
 			}, 300000);								// Remove from cache after 5 minutes
 
 			return response;
+
+		}).catch(error => {
+
+			delete fetcher_promises[url];
+			throw error;
+
 		});
 	}
 
