@@ -566,7 +566,9 @@ const client_prototype = {
 				signal: abortcontroller?.signal,
 			});
 		}).catch(error => {
-			this.register_failure();
+			if (!abortcontroller?.signal.aborted) {
+				this.register_failure();
+			}
 			throw error;
 		}).then(response => {
 			if (response.status !== 200) {
