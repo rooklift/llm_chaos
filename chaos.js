@@ -255,7 +255,7 @@ const bot_prototype = {
 				this.queue.push(msg);
 			});
 
-			this.conn.login(fs.readFileSync(cfg.bot_token_file, "utf8"));
+			this.conn.login(fs.readFileSync(cfg.bot_token_file, "utf8").trim());
 		});
 	},
 
