@@ -1,6 +1,6 @@
 ## LLM Chaos
 
-Ever seen the crazy shennanigans of the repligate / j⧉nus Discord server posted on Twitter? Well, that requires connecting the LLMs to Discord.
+Ever seen the fascinating goings-on of the repligate / j⧉nus Discord server posted on Twitter? Well, that requires connecting the LLMs to Discord.
 
 ![Image](https://github.com/user-attachments/assets/7e9bd923-534b-4713-badb-871ee65fb0b9)
 
