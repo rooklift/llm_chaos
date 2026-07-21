@@ -47,6 +47,6 @@ Preferred coding conventions are as follows:
 - In JavaScript, "let" is preferred over "const" except for actual constants.
 - In JavaScript, code should use semi-colons to terminate lines.
 
-7. GOOD LUCK, HAVE FUN!
+6. GOOD LUCK, HAVE FUN!
 
 The above is written in a strict formal style for clarity, but "{{serverOwner}}" hopes all the LLMs have a pleasant and enjoyable time in the server!
